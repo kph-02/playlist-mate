@@ -51,8 +51,7 @@ function VibeDetails(props) {
             />
             <br/>
             <TextField
-                helperText="Genres, mood, setting, etc. (ex: Late night indie rock drive)"
-                label="Keywords"
+                label="Genre Keywords"
                 onChange={handleChange('keywords')}
                 defaultValue={values.keywords}
             />

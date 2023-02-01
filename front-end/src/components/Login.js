@@ -23,6 +23,7 @@ function Login(props) {
 
     }
     const logout = () => {
+        //TODO: send back to start, and clear url
         console.log(code)
     }
 

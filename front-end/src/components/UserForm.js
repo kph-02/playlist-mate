@@ -3,6 +3,7 @@ import TitleDetails from './TitleDetails';
 import VibeDetails from './VibeDetails';
 import LengthDetails from './LengthDetails';
 import CoreItemsDetails from './CoreItemsDetails';
+import PlaylistDisplay from './PlaylistDisplay';
 import { createColor } from 'material-ui-color';
 import useAuth from './useAuth';
 
@@ -10,6 +11,7 @@ function UserForm(props) {
     
     const [step, setStep] = useState(1);
     const [playlistTitle, setPlaylistTitle] = useState('');
+    /*
     const defaultColorsArray = [
         { 
             id: 1,
@@ -25,6 +27,7 @@ function UserForm(props) {
         }
     ];
     const [colors, setColors] = useState(defaultColorsArray);
+    */
     const [isInstrumental, setIsInstrumental] = useState(false);
     const [keywords, setKeywords] = useState('');
     const [isPublic, setIsPublic] = useState(false);
@@ -48,8 +51,9 @@ function UserForm(props) {
     const handleChange = (input) => e => {
         if (input === 'playlistTitle') {
             setPlaylistTitle(e.target.value);
+        /*    
         } else if (input ===  'colors') {
-            /*
+            
             setColors(
                 colors.map((currColor) =>
                 // Here you accept a id argument to the function and replace it with hard coded 2, to make it dynamic.
@@ -58,7 +62,7 @@ function UserForm(props) {
                     : { ...currColor }
                 )
             );
-            */
+        */
         } else if (input ===  'isInstrumental') {
             if (e.target.value === 'on') {
                 setIsInstrumental(true);
@@ -80,7 +84,7 @@ function UserForm(props) {
         setCoreItemThree(itemThree);
     }
     
-    const values = {playlistTitle, colors, isInstrumental, keywords, isPublic, coreItemOne, coreItemTwo, coreItemThree, desiredLength, accessToken}
+    const values = {playlistTitle, isInstrumental, keywords, isPublic, coreItemOne, coreItemTwo, coreItemThree, desiredLength, accessToken}
 
     switch(step) {
         case 1:
@@ -118,6 +122,16 @@ function UserForm(props) {
             return (
                 <div>
                     <LengthDetails
+                        nextStep={nextStep}
+                        handleChange={handleChange}
+                        values={values}
+                    />            
+                </div>
+            )
+        case 5:
+            return (
+                <div>
+                    <PlaylistDisplay
                         nextStep={nextStep}
                         handleChange={handleChange}
                         values={values}
