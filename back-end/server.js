@@ -2,18 +2,18 @@ const express = require('express');
 const SpotifyWebApi = require('spotify-web-api-node');
 const cors = require('cors')
 const bodyParser = require('body-parser');
-const { response } = require('express');
+const { response, query } = require('express');
 const { Heap } = require('heap-js');
-const { FreeBreakfastOutlined } = require('@material-ui/icons');
+const e = require('express');
 
 const app = express()
 app.use(cors())
 app.use(bodyParser.json())
 
 //Biggest determiner of time to load along with wifi speed
-const MAX_SEARCH_PAGE_LIMIT = 5;
+const MAX_SEARCH_PAGE_LIMIT = 1;
 
-async function generateMinedSet(accessToken, keywords, isInstrumental) {
+async function generateMinedBank(accessToken, keywords, isInstrumental) {
   var queryParameters = {
     method: 'GET',
     headers: {
@@ -23,7 +23,7 @@ async function generateMinedSet(accessToken, keywords, isInstrumental) {
   }
 
   //In order of decreasing frequency count
-  let minedSet = []
+  let minedBank = []
   const songMap = new Map();
   let allSongsSeen = false;
   let APIlimitReached = false;
@@ -69,7 +69,7 @@ async function generateMinedSet(accessToken, keywords, isInstrumental) {
                         for (let l = 0; l < data3.audio_features.length; l++) {
                           if ((data3.audio_features[l] != null) && (data3.audio_features[l].instrumentalness < 0.5)) {
                             nonInstrumentalTracks.add(data3.audio_features[l].id)
-                            console.log("Non Instrumental Found")
+                            //console.log("Non Instrumental Found")
                           }
                         }
                     })
@@ -81,16 +81,16 @@ async function generateMinedSet(accessToken, keywords, isInstrumental) {
                   if (currTrack != null) {
                     if (songMap.has(currTrack.id)) {
                       songMap.get(currTrack.id).count++
-                      console.log("Incrementing song count")
+                      //console.log("Incrementing song count")
                     } else {
                       if (isInstrumental == 'true') {     
                         if (!nonInstrumentalTracks.has(currTrack.id)) {
-                          songMap.set(currTrack.id, {count: 1})
-                          console.log("Adding new instrumental song to songMap")
+                          songMap.set(currTrack.id, {count: 1, duration: currTrack.duration_ms/1000})
+                          //console.log("Adding new instrumental song to songMap")
                         }
                       } else {
-                        songMap.set(currTrack.id, {count: 1})
-                        console.log("Adding new song to songMap")
+                        songMap.set(currTrack.id, {count: 1, duration: currTrack.duration_ms/1000})
+                        //console.log("Adding new song to songMap")
                       }
                     }
                   }
@@ -105,53 +105,428 @@ async function generateMinedSet(accessToken, keywords, isInstrumental) {
   const maxHeap = new Heap(customPriorityComparator)
 
   songMap.forEach((value, key) => {
-    maxHeap.push(key)
+    if (key != null) {
+      maxHeap.push(key)
+      //console.log("Adding" + key + "with value count " + value.count + " and duration " + value.duration + " to maxHeap")
+    }
   })
   
-  for (let i = 0; i < 300; i++) {
+  for (let i = 0; i < 200; i++) {
     if (maxHeap.peek() != null) {
-      minedSet.push(maxHeap.pop())
-      console.log("Added track to mined set")
+      let currTrackID = maxHeap.pop()
+      let currTrack = {
+        "id" : currTrackID, 
+        "duration" : songMap.get(currTrackID).duration
+      }
+      //console.log("Adding this track to mined bank: ")
+      //console.log(currTrack)
+      minedBank.push(currTrack)
     }
   }
 
-  /* View mined set
-  */
-  for (let i = 0; i < minedSet.length; i++) {
-    console.log("Song ID: " + minedSet[i] + " Count:  " + songMap.get(minedSet[i]).count)  
+  /* View mined bank 
+  console.log("Mined bank length: " + minedBank.length)
+  for (let i = 0; i < minedBank.length; i++) {
+    console.log("Song ID: " + minedBank[i].id + " Count:  " + songMap.get(minedBank[i].id).count)  
   }
-  return minedSet
+  */
+  
+  console.log("Finished generating the mined bank")
+  return minedBank
+  
 }
 
-async function generateCoreItemSet(accessToken, coreItem, isInstrumental) {
+async function generateCoreItemBank(accessToken, coreItem, isInstrumental) {
+  var queryParameters = {
+    method: 'GET',
+    headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + accessToken
+    }
+  }
 
+  let coreItemBank = [];
+  let coreItemID = "";
+  if (coreItem.substring(8, 13) == "track") {
+    coreItemID = coreItem.substring(14, coreItem.length);
+    let coreItemTrackDuration = 0;
+
+    //Max Set part
+    var returnTrack= await fetch('https://api.spotify.com/v1/tracks/' + coreItemID, queryParameters) 
+      .then(response => response.json())
+      .then(data => {   
+        coreItemTrackDuration = data.duration_ms/1000
+      })
+    let coreItemTrack = {
+      "id" : coreItemID, 
+      "duration" : coreItemTrackDuration
+    }
+    coreItemBank.push(coreItemTrack)
+    if (isInstrumental == 'true') {
+      var returnInstrumentalTracks= await fetch('https://api.spotify.com/v1/recommendations?limit=10&market=US&seed_tracks=' + coreItemID  + '&min_instrumentalness=0.5', queryParameters) 
+      .then(response => response.json())
+      .then(data => {   
+        for (let i = 0; i < data.tracks.length; i++) {
+          let currTrack = {
+            "id" : data.tracks[i].id, 
+            "duration" : data.tracks[i].duration_ms/1000
+          }
+          coreItemBank.push(currTrack)
+        }
+      })
+    } else {
+      var returnNonInstrumentalTracks= await fetch('https://api.spotify.com/v1/recommendations?limit=10&market=US&seed_tracks=' + coreItemID  + '&max_instrumentalness=0.5', queryParameters) 
+      .then(response => response.json())
+      .then(data => {   
+        for (let i = 0; i < data.tracks.length; i++) {
+          let currTrack = {
+            "id" : data.tracks[i].id, 
+            "duration" : data.tracks[i].duration_ms/1000
+          }
+          coreItemBank.push(currTrack)
+        }
+      })
+    }
+  } else if (coreItem.substring(8, 14) == "artist") {
+    coreItemID = coreItem.substring(15, coreItem.length);
+    var returnArtistTracks= await fetch('https://api.spotify.com/v1/artists/' + coreItemID + "/top-tracks/?market=US", queryParameters) 
+    .then(response => response.json())
+    .then(async data => {   
+      for (let i = 0; i < 5; i++) {
+        if (data.tracks.length < 5) {
+          if (i == data.tracks.length) {
+            break;
+          }
+        }
+        let currTrack = {
+          "id" : data.tracks[i].id, 
+          "duration" : data.tracks[i].duration_ms/1000
+        }
+        coreItemBank.push(currTrack)
+      }
+      //Max Set part
+      if (isInstrumental == 'true') {
+        var returnInstrumentalTracks= await fetch('https://api.spotify.com/v1/recommendations?limit=5&market=US&seed_artists=' + coreItemID  + '&min_instrumentalness=0.5', queryParameters) 
+        .then(response => response.json())
+        .then(data => {   
+          for (let i = 0; i < data.tracks.length; i++) {
+            let currTrack = {
+              "id" : data.tracks[i].id, 
+              "duration" : data.tracks[i].duration_ms/1000
+            }
+            coreItemBank.push(currTrack)
+          }
+        })
+      } else {
+        var returnNonInstrumentalTracks= await fetch('https://api.spotify.com/v1/recommendations?limit=5&market=US&seed_artists=' + coreItemID  + '&max_instrumentalness=0.5', queryParameters) 
+        .then(response => response.json())
+        .then(data => {   
+          for (let i = 0; i < data.tracks.length; i++) {
+            let currTrack = {
+              "id" : data.tracks[i].id, 
+              "duration" : data.tracks[i].duration_ms/1000
+            }
+            coreItemBank.push(currTrack)
+          }
+        })
+      }
+    })
+
+  } else if (coreItem.substring(8, 13) == "album") {
+    coreItemID = coreItem.substring(14, coreItem.length);
+    let albumSeedString = ""; 
+    var returnAlbumTracks= await fetch('https://api.spotify.com/v1/albums/' + coreItemID + "/tracks/?market=US", queryParameters) 
+    .then(response => response.json())
+    .then(data => {   
+      for (let i = 0; i < data.items.length; i++) {
+        let currTrack = {
+            "id" : data.items[i].id, 
+            "duration" : data.items[i].duration_ms/1000
+        }
+        if (i == 0) {
+          albumSeedString += data.items[i].id
+        } else if (i < 5) {
+          albumSeedString += ","
+          albumSeedString += data.items[i].id
+        }
+        coreItemBank.push(currTrack)
+      }
+    })
+    //console.log(albumSeedString)
+    //Max Set part
+    
+    if (isInstrumental == 'true') {
+      var returnInstrumentalTracks= await fetch('https://api.spotify.com/v1/recommendations?limit=5&market=US&seed_tracks=' + albumSeedString  + '&min_instrumentalness=0.5', queryParameters) 
+      .then(response => response.json())
+      .then(data => {   
+        for (let i = 0; i < data.tracks.length; i++) {
+          let currTrack = {
+            "id" : data.tracks[i].id, 
+            "duration" : data.tracks[i].duration_ms/1000
+          }
+          coreItemBank.push(currTrack)
+        }
+      })
+    } else {
+      var returnNonInstrumentalTracks= await fetch('https://api.spotify.com/v1/recommendations?limit=5&market=US&seed_tracks=' + albumSeedString  + '&max_instrumentalness=0.5', queryParameters) 
+      .then(response => response.json())
+      .then(data => {   
+        for (let i = 0; i < data.tracks.length; i++) {
+          let currTrack = {
+            "id" : data.tracks[i].id, 
+            "duration" : data.tracks[i].duration_ms/1000
+          }
+          coreItemBank.push(currTrack)
+        }
+      })
+    }
+    
+  }
+  if (coreItemBank != []) {
+    /* View coreItemBank
+    for (let i = 0; i < coreItemBank.length; i++) {
+      console.log(coreItemBank[i])
+    }
+    */
+    console.log("Finished generating a core item bank")
+    return coreItemBank
+  } else {
+    console.error("Empty Core Item bank")
+    return null
+  }
 }
 
+async function generateMinimumCoreItemSet(accessToken, coreItem, coreItemBank) {
 
-function generatePlaylist(req, res) {
+  var queryParameters = {
+    method: 'GET',
+    headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + accessToken
+    }
+  }
 
-  let minedSet = generateMinedSet(req.query.accessToken, req.query.keywords, req.query.isInstrumental);
-  let coreItemSetOne = generateCoreItemSet(req.query.accessToken, req.query.coreItemOne, req.query.isInstrumental);
-  let coreItemSetTwo = [];
-  let coreItemSetThree = [];
+  minimumCoreItemSet = [];
+  if (coreItem.substring(8, 13) == "track") {
+    minimumCoreItemSet.push(coreItemBank[0])
+  } else if (coreItem.substring(8, 14) == "artist"){
+    for (let i = 0; i < 5; i++) {
+      minimumCoreItemSet.push(coreItemBank[i])
+    }
+  } else if (coreItem.substring(8, 13) == "album"){
+    let albumLength = 0;
+    coreItemID = coreItem.substring(14, coreItem.length);
+    var returnAlbum= await fetch('https://api.spotify.com/v1/albums/' + coreItemID, queryParameters) 
+    .then(response => response.json())
+    .then(data => {   
+      albumLength = data.total_tracks
+    })
+    if (albumLength != 0) {
+      for (let i = 0; i < albumLength; i++) {
+        minimumCoreItemSet.push(coreItemBank[i])
+      }
+    }
+  }
+  if (minimumCoreItemSet != []) {
+    return minimumCoreItemSet
+  } else {
+    return null
+  }
+}
+async function generatePlaylist(req, res) {
+  //Each item in generated sets look like { id : *ID*, duration : *duration_in_s* }
+  let coreItemOneBank = await generateCoreItemBank(req.query.accessToken, req.query.coreItemOne, req.query.isInstrumental);
+  let coreItemTwoBank = [];
+  let coreItemThreeBank = [];
   let numCoreItems = 1;
 
   if (req.query.coreItemTwo != '') {
     numCoreItems = 2;
-    coreItemSetTwo = generateCoreItemSet(req.query.accessToken, req.query.coreItemTwo, req.query.isInstrumental);
+    coreItemTwoBank = await generateCoreItemBank(req.query.accessToken, req.query.coreItemTwo, req.query.isInstrumental);
     if (req.query.coreItemThree != '') {
       numCoreItems = 3;
-      coreItemSetThree = generateCoreItemSet(req.query.accessToken, req.query.coreItemThree, req.query.isInstrumental);
+      coreItemThreeBank = await generateCoreItemBank(req.query.accessToken, req.query.coreItemThree, req.query.isInstrumental);
     }
   }
+  let minedBank = await generateMinedBank(req.query.accessToken, req.query.keywords, req.query.isInstrumental);
+  console.log("Finished Generating all banks")
+
+  /* View all bank items
+
+  for(let i = 0; i < minedBank.length; i++) {
+    console.log("Mined bank item " + i)
+    console.log(minedBank[i])
+  }
+  for(let i = 0; i < coreItemOneBank.length; i++) {
+    console.log("Core Item One bank item " + i)
+    console.log(coreItemOneBank[i])
+  }
+  for(let i = 0; i < coreItemTwoBank.length; i++) {
+    console.log("Core Item Two bank item " + i)
+    console.log(coreItemTwoBank[i])
+  }
+  for(let i = 0; i < coreItemThreeBank.length; i++) {
+    console.log("Core Item Three bank item " + i)
+    console.log(coreItemThreeBank[i])
+  }
+
+  */
+
+  //Final assembly
+  let finalPlaylist = [];
 
   let currLength = 0;
-  while (currLength < (req.query.desiredLength * 1000)) {
-    //Add songs 1 by 1 updating currLength
-  }
+  //Create minimum playlist
+  let coreItemOneSet = [];
+  let minedSetOne = [];
   
+  console.log("Assembling final playlist")
+  if (numCoreItems == 1) {
+    coreItemOneSet = await generateMinimumCoreItemSet(req.query.accessToken, req.query.coreItemOne, coreItemOneBank)
+    for (let i = 0; i < coreItemOneSet.length; i++) {
+      currLength += coreItemOneSet[i].duration
+    }
+    let count = 0
+    let minedBankIndex = 0
+    let coreItemOneBankIndex = 0
+    while (currLength <= req.query.desiredLength) {
+      if (count == 0) {
+        if (minedBankIndex < minedBank.length && minedBank[minedBankIndex] != undefined) {
+          minedSetOne.push(minedBank[minedBankIndex])
+          currLength += minedBank[minedBankIndex].duration
+        } else {
+          break
+        }               
+        count++
+        minedBankIndex++
+      } else if (count == 1) {
+        if (coreItemOneBankIndex < coreItemOneBank.length && coreItemOneBank[coreItemOneBankIndex] != undefined) {
+          coreItemOneSet.push(coreItemOneBank[coreItemOneBankIndex])
+          currLength += coreItemOneBank[coreItemOneBankIndex].duration
+        }
+        count = 0
+        coreItemOneBankIndex++
+      }
+    }
+    finalPlaylist = [...coreItemOneSet, ...minedSetOne]
+  } else if (numCoreItems == 2) {
+    let coreItemTwoSet = [];
+    coreItemOneSet = await generateMinimumCoreItemSet(req.query.accessToken, req.query.coreItemOne, coreItemOneBank)
+    coreItemTwoSet = await generateMinimumCoreItemSet(req.query.accessToken, req.query.coreItemTwo, coreItemTwoBank)
+    for (let i = 0; i < coreItemOneSet.length; i++) {
+      currLength += coreItemOneSet[i].duration
+    }
+    for (let i = 0; i < coreItemTwoSet.length; i++) {
+      currLength += coreItemTwoSet[i].duration
+    }
+    let count = 0
+    let minedBankIndex = 0
+    let coreItemOneBankIndex = 0
+    let coreItemTwoBankIndex = 0
+    while (currLength <= req.query.desiredLength) {
+      if (count == 0) {
+        if (minedBankIndex < minedBank.length && minedBank[minedBankIndex] != undefined) {
+          minedSetOne.push(minedBank[minedBankIndex])
+          currLength += minedBank[minedBankIndex].duration
+        } else {
+          break
+        }           
+        count++
+        minedBankIndex++
+      } else if (count == 1) {
+        if (coreItemOneBankIndex < coreItemOneBank.length && coreItemOneBank[coreItemOneBankIndex] != undefined) {
+          coreItemOneSet.push(coreItemOneBank[coreItemOneBankIndex])
+          currLength += coreItemOneBank[coreItemOneBankIndex].duration
+        }
+        count++
+        coreItemOneBankIndex++
+      } else if (count == 2) {
+        if (coreItemTwoBankIndex < coreItemTwoBank.length  && coreItemTwoBank[coreItemTwoBankIndex] != undefined) {
+          coreItemTwoSet.push(coreItemTwoBank[coreItemTwoBankIndex])
+          currLength += coreItemTwoBank[coreItemTwoBankIndex].duration
+        }
+        count = 0
+        coreItemTwoBankIndex++
+      }
+    }
+    finalPlaylist = [...coreItemOneSet, ...minedSetOne, ...coreItemTwoSet]
+  } else if (numCoreItems == 3) {
+    let coreItemTwoSet = [];
+    let coreItemThreeSet = [];
+    let minedSetTwo = [];
+    coreItemOneSet = await generateMinimumCoreItemSet(req.query.accessToken, req.query.coreItemOne, coreItemOneBank)
+    coreItemTwoSet = await generateMinimumCoreItemSet(req.query.accessToken, req.query.coreItemTwo, coreItemTwoBank)
+    coreItemThreeSet = await generateMinimumCoreItemSet(req.query.accessToken, req.query.coreItemThree, coreItemThreeBank)
+    for (let i = 0; i < coreItemOneSet.length; i++) {
+      currLength += coreItemOneSet[i].duration
+    }
+    for (let i = 0; i < coreItemTwoSet.length; i++) {
+      currLength += coreItemTwoSet[i].duration
+    }
+    for (let i = 0; i < coreItemThreeSet.length; i++) {
+      currLength += coreItemThreeSet[i].duration
+    }
+    let count = 0
+    let minedBankIndex = 0
+    let coreItemOneBankIndex = 0
+    let coreItemTwoBankIndex = 0
+    let coreItemThreeBankIndex = 0
+    while (currLength <= req.query.desiredLength) {
+      if (count == 0) {
+        if (minedBankIndex < minedBank.length && minedBank[minedBankIndex] != undefined) {
+          minedSetOne.push(minedBank[minedBankIndex])
+          currLength += minedBank[minedBankIndex].duration
+        } else {
+          break
+        } 
+        count++
+        minedBankIndex++
+      } else if (count == 1) {
+        if (coreItemOneBankIndex < coreItemOneBank.length  && coreItemOneBank[coreItemOneBankIndex] != undefined) {
+          coreItemOneSet.push(coreItemOneBank[coreItemOneBankIndex])
+          currLength += coreItemOneBank[coreItemOneBankIndex].duration
+        }
+        count++
+        coreItemOneBankIndex++
+      } else if (count == 2) {
+        if (coreItemTwoBankIndex < coreItemTwoBank.length  && coreItemTwoBank[coreItemTwoBankIndex] != undefined) {
+          coreItemTwoSet.push(coreItemTwoBank[coreItemTwoBankIndex])
+          currLength += coreItemTwoBank[coreItemTwoBankIndex].duration
+        }
+        count++
+        coreItemTwoBankIndex++
+      } else if (count == 3) {
+        if (minedBankIndex < minedBank.length  && minedBank[minedBankIndex] != undefined) {
+          minedSetTwo.push(minedBank[minedBankIndex])
+          currLength += minedBank[minedBankIndex].duration
+        } else {
+          break
+        } 
+        count++
+        minedBankIndex++
+      } else if (count == 4) {
+        if (coreItemThreeBankIndex < coreItemThreeBank.length  && coreItemThreeBank[coreItemThreeBankIndex] != undefined) {
+          coreItemThreeSet.push(coreItemThreeBank[coreItemThreeBankIndex])
+          currLength += coreItemThreeBank[coreItemThreeBankIndex].duration
+        }
+        count = 0
+        coreItemThreeBankIndex++
+      }
+    }
+    finalPlaylist = [...coreItemOneSet, ...minedSetOne, ...coreItemTwoSet, ...minedSetTwo, ...coreItemThreeSet]
+  }
+
+  /* View final playlist 
+  if (finalPlaylist != []) {
+    for (let i = 0; i < finalPlaylist.length; i++) {
+      console.log("Final Playlist item " + i)
+      console.log(finalPlaylist[i])
+    }
+  }
+  */
+  console.log("Final Playlist duration in seconds: " + currLength)
   console.log(req.query)
-  res.status(200).send({message: 'Data received'})
+  res.status(200).send({finalPlaylist: finalPlaylist})
 }
 
 
@@ -200,3 +575,4 @@ app.post ('/refresh', (req, res) => {
 })
 
 app.listen(3001, () => {console.log("Server started on port 5000")})
+

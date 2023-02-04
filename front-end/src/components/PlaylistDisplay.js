@@ -21,6 +21,9 @@ function PlaylistDisplay(props) {
             params: values
         }).then((res) => {
             console.log(res.data)
+            if (res.data.finalPlaylist.length != 0) {
+                setPlaylistGenerated(true)
+            }
         }).catch(error => {
             console.log(error);
         });
@@ -28,9 +31,12 @@ function PlaylistDisplay(props) {
 
     return (
         <ThemeProvider theme={appTheme}>
-            {(playlistGenerated == false) &&
+            { (playlistGenerated == false)  ?
                 <img  src={pmLogo} alt="logo"/>
-            }   
+                :
+                <h1>Playlist</h1>
+            }
+
             <br/>
         </ThemeProvider>
     );
