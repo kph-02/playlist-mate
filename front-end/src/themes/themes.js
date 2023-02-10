@@ -13,7 +13,7 @@ export const appTheme = createTheme({
       main: '#f50057',
     },
     text: {
-      primary: '#f5e3cf',
+      primary: '#000000',
     },
-  },
+  }, 
 });
