@@ -8,6 +8,9 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 function VibeDetails(props) {
 
+    //2-13-23, Spotify API doesn't work when creating private playlists
+    const isPrivatePossible = false;
+
     const continueStep = e => {
         if (values.keywords == '') {
             alert("Please enter genre keywords.")
@@ -45,12 +48,14 @@ function VibeDetails(props) {
                 label="Instrumentals only"
             />
             <br/>
+            {isPrivatePossible && 
             <FormControlLabel
                 sx={{ mx: 10 }}
                 labelPlacement="start"
                 control={<Switch onChange={handleChange('isPublic')} />}
                 label="Public Spotify playlist"
             />
+            }
             <br/>
             <TextField
                 sx={{ mx: 10, my: 2 }}

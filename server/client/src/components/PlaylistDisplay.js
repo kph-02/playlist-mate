@@ -143,7 +143,11 @@ function PlaylistDisplay(props) {
         if (userID == "") {
             console.log("API Error!")
         }
-
+        let isPlaylistPublic = false;
+        if (values.isPublic == true || values.isPublic == 'true') {
+            isPlaylistPublic = true;
+            console.log("Playlist is public")
+        }
         var postCreateQueryParameters = {
             method: 'POST',
             headers: {
@@ -154,7 +158,7 @@ function PlaylistDisplay(props) {
                 {
                     "name": values.playlistTitle,
                     "description": playlistDescription,
-                    "public": values.isPublic
+                    "public": isPlaylistPublic
             })
         }
         console.log(postCreateQueryParameters)
@@ -208,6 +212,11 @@ function PlaylistDisplay(props) {
             .then(data => {
                 console.log("Tracks Added!")
             });            
+        }
+        if (playlistID != "") {
+            alert("Added to Spotify")
+        } else {
+            alert("Error adding to Spotify")
         }
     }
 
