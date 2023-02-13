@@ -6,7 +6,7 @@
   "scripts": {
     "devStart": "nodemon server.js",
     "start": "pm2-runtime start ecosystem.config.js --env production",
-    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --legacy-peer-deps --prefix  client && npm run build --legacy-peer-deps --prefix client"
+    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --legacy-peer-deps --prefix client && npm run build --prefix client"
   },
   "keywords": [],
   "author": "",

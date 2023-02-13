@@ -15,12 +15,11 @@ const port = process.env.PORT || 3001
 //Serve static assets if in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static('client/build'))
-
+  app.get("/generatePlaylist", generatePlaylist);
   app.get('*', (req, res) => {
-    res.sendFile(path.resolve(___dirname, 'client', 'build', 'index.html'));
+    res.sendFile(path.resolve(__dirname, 'client', 'build', 'index.html'));
   })
 }
-
 
 //Biggest determiner of time to load along with wifi speed
 const MAX_SEARCH_PAGE_LIMIT = 1;
@@ -349,6 +348,7 @@ async function generateMinimumCoreItemSet(accessToken, coreItem, coreItemBank) {
   }
 }
 async function generatePlaylist(req, res) {
+  console.log("Generating Playlist")
   //Each item in generated sets look like { id : *ID*, duration : *duration_in_s* }
   let coreItemOneBank = await generateCoreItemBank(req.query.accessToken, req.query.coreItemOne, req.query.isInstrumental);
   let coreItemTwoBank = [];
@@ -584,13 +584,11 @@ async function isSongTakenDown(accessToken, trackID) {
 }
 
 
-app.get("/generatePlaylist", generatePlaylist);
-
-
 app.post("/login", (req, res) => {
+    console.log("Login Request received")
     const code = req.body.code
     const spotifyApi = new SpotifyWebApi({
-        redirectUri: 'http://localhost:3000/',
+        redirectUri: 'https://playlist-mate-production.herokuapp.com/',
         clientId: '20f6d7c7a039406b855bb7337bb6dd25',
         clientSecret: '09f60c7d81d845cd993e51298d3fee71'
     })
@@ -612,7 +610,7 @@ app.post("/login", (req, res) => {
 app.post ('/refresh', (req, res) => {
   const refreshToken = req.body.refreshToken
   const spotifyApi = new SpotifyWebApi({
-    redirectUri: 'http://localhost:3000/',
+    redirectUri: 'https://playlist-mate-production.herokuapp.com/',
     clientId: '20f6d7c7a039406b855bb7337bb6dd25',
     clientSecret: '09f60c7d81d845cd993e51298d3fee71',
     refreshToken,

@@ -7,7 +7,7 @@ function Login(props) {
     const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize"
     const CLIENT_ID = "20f6d7c7a039406b855bb7337bb6dd25"
     const RESPONSE_TYPE = "code"
-    const REDIRECT_URI = "http://localhost:3000/"
+    const REDIRECT_URI = "https://playlist-mate-production.herokuapp.com/"
     //If image upload is implemented
     //const SCOPES = "ugc-image-upload%20playlist-modify-private%20playlist-modify-public"
     const SCOPES = "playlist-modify-private%20playlist-modify-public"
