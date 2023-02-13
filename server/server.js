@@ -22,7 +22,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 //Biggest determiner of time to load along with wifi speed
-const MAX_SEARCH_PAGE_LIMIT = 2;
+const MAX_SEARCH_PAGE_LIMIT = 1;
 
 async function generateMinedBank(accessToken, keywords, isInstrumental) {
   var queryParameters = {
