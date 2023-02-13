@@ -7,7 +7,7 @@ function useAuth(code) {
     const [expiresIn, setExpiresIn] = useState()
 
     useEffect(() => {
-        axios.post('https://playlist-mate-production.herokuapp.com/login', {
+        axios.post('https://www.playlistmate.app/login', {
             code,
         }).then(res => {
             setAccessToken(res.data.accessToken)
@@ -20,7 +20,7 @@ function useAuth(code) {
     useEffect(() => {
         if (!refreshToken || !expiresIn) return
         const interval = setInterval(() => {
-            axios.post('https://playlist-mate-production.herokuapp.com/refresh', {
+            axios.post('https://www.playlistmate.app/refresh', {
                 refreshToken,
             }).then(res => {
                 setAccessToken(res.data.accessToken)

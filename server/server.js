@@ -588,7 +588,7 @@ app.post("/login", (req, res) => {
     console.log("Login Request received")
     const code = req.body.code
     const spotifyApi = new SpotifyWebApi({
-        redirectUri: 'https://playlist-mate-production.herokuapp.com/',
+        redirectUri: 'https://www.playlistmate.app/',
         clientId: '20f6d7c7a039406b855bb7337bb6dd25',
         clientSecret: '09f60c7d81d845cd993e51298d3fee71'
     })
@@ -610,7 +610,7 @@ app.post("/login", (req, res) => {
 app.post ('/refresh', (req, res) => {
   const refreshToken = req.body.refreshToken
   const spotifyApi = new SpotifyWebApi({
-    redirectUri: 'https://playlist-mate-production.herokuapp.com/',
+    redirectUri: 'https://www.playlistmate.app/',
     clientId: '20f6d7c7a039406b855bb7337bb6dd25',
     clientSecret: '09f60c7d81d845cd993e51298d3fee71',
     refreshToken,

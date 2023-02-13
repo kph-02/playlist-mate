@@ -222,7 +222,7 @@ function PlaylistDisplay(props) {
 
     useEffect(() => {
         console.log(values)
-        axios.get('https://playlist-mate-production.herokuapp.com/generatePlaylist', {
+        axios.get('https://www.playlistmate.app/generatePlaylist', {
             params: values
         }).then(async (res) => {
             if (res.data.finalPlaylist.length != 0) {
