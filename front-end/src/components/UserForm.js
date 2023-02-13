@@ -11,23 +11,6 @@ function UserForm(props) {
     
     const [step, setStep] = useState(1);
     const [playlistTitle, setPlaylistTitle] = useState('');
-    /*
-    const defaultColorsArray = [
-        { 
-            id: 1,
-            colorVal: createColor('#000')
-        },
-        { 
-            id: 2,
-            colorVal: createColor('#000')
-        },
-        {  
-            id: 3,
-            colorVal: createColor('#000')
-        }
-    ];
-    const [colors, setColors] = useState(defaultColorsArray);
-    */
     const [isInstrumental, setIsInstrumental] = useState(false);
     const [keywords, setKeywords] = useState('');
     const [isPublic, setIsPublic] = useState(false);
@@ -37,15 +20,22 @@ function UserForm(props) {
     //desiredLength is in seconds.
     const [desiredLength, setDesiredLength] = useState(0);
     const {code} = props
-    const accessToken = useAuth(code)
+    let accessToken = useAuth(code)
     
     
     const nextStep = () => {
         setStep(step + 1);
     }
 
+    const logout = () => {
+        var url = new URL(window.location);  
+        url.searchParams.set('code', 'restart');
+        window.location.href = url;
+        accessToken = "";
+    }
+
     const previousStep = () => {
-        setStep(step + 1);
+        setStep(step - 1);
     }
 
     const handleChange = (input) => e => {
@@ -89,54 +79,57 @@ function UserForm(props) {
     switch(step) {
         case 1:
             return (
-                <div>
+                <>
                     <TitleDetails
                         nextStep={nextStep}
                         handleChange={handleChange}
                         values={values}
                     />
-                </div>
+                </>
             )
         case 2:
             return (
-                <div>
+                <>
                     <VibeDetails
                         nextStep={nextStep}
+                        previousStep={previousStep}
                         handleChange={handleChange}
                         values={values}
                     />            
-                </div>
+                </>
     
             )
         case 3:
             return (
-                <div>
+                <>
                     <CoreItemsDetails
                         nextStep={nextStep}
+                        previousStep={previousStep}
                         handleCoreItems={handleCoreItems}
                         values={values}
                     />            
-                </div>
+                </>
             )
         case 4:
             return (
-                <div>
+                <>
                     <LengthDetails
                         nextStep={nextStep}
+                        previousStep={previousStep}
                         handleChange={handleChange}
                         values={values}
                     />            
-                </div>
+                </>
             )
         case 5:
             return (
-                <div>
+                <>
                     <PlaylistDisplay
-                        nextStep={nextStep}
+                        logout={logout}
                         handleChange={handleChange}
                         values={values}
                     />            
-                </div>
+                </>
             )
     }
 }

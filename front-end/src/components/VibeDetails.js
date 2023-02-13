@@ -1,12 +1,8 @@
 import React, { useState, useEffect } from "react";
-import '../App.css';
-import { ThemeProvider } from "@mui/material";
-import TextField from "@mui/material/TextField";
-import Fab from "@mui/material/Fab";
-import Switch from "@mui/material/Switch"
+import { ThemeProvider, FormControlLabel, Fab, TextField, IconButton, Switch, Typography } from "@mui/material";
 import { appTheme } from "../themes/themes";
-import { ColorPicker } from 'material-ui-color'
-import FormControlLabel from '@mui/material/FormControlLabel';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+
 
 
 
@@ -16,41 +12,44 @@ function VibeDetails(props) {
         e.preventDefault();
         props.nextStep();
     }
+    const backStep = e => {
+        e.preventDefault();
+        props.previousStep();
+    }
 
     const { values, handleChange } = props;
 
     return (
         <ThemeProvider theme={appTheme}>
-            <h2>Whats the Vibe?</h2>
-            {/* TODO when implementing listener
-            <ColorPicker 
-                value={values.colors.find(x => x.id=1).colorVal}
-                onChange={handleChange('colors')} />
-            <ColorPicker
-                defaultValue={values.colors.find(x => x.id=2).colorVal}
-                name='colorTwo'
-                onChange={colorTwo => console.log(colorTwo)}
-             />
-            <ColorPicker
-                defaultValue={values.colors.find(x => x.id=2).colorVal}
-                name='colorThree'
-                onChange={colorThree => console.log(colorThree)}
-            />
-            */}
-            <h3>*Insert Color selectors here*</h3>
+            <IconButton 
+                sx={{ 
+                    mr:30, 
+                }} 
+                onClick={backStep} color="secondary">
+                <ArrowBackIcon/>
+            </IconButton>
+            <Typography 
+                sx={{ mx: 10, my: 2}}
+                variant="h3" 
+                color="textPrimary">
+                    Vibe
+            </Typography>
             <FormControlLabel
+                sx={{ mx: 10 }}
                 labelPlacement="start"
                 control={<Switch onChange={handleChange('isInstrumental')} />}
                 label="Instrumentals only"
             />
             <br/>
             <FormControlLabel
+                sx={{ mx: 10 }}
                 labelPlacement="start"
                 control={<Switch onChange={handleChange('isPublic')} />}
                 label="Public Spotify playlist"
             />
             <br/>
             <TextField
+                sx={{ mx: 10, my: 2 }}
                 label="Genre Keywords"
                 onChange={handleChange('keywords')}
                 defaultValue={values.keywords}
@@ -58,6 +57,8 @@ function VibeDetails(props) {
             <br/>
             <Fab
                 variant="extended"
+                color="primary"
+
                 onClick={continueStep}
             >
                 Next

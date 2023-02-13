@@ -1,10 +1,6 @@
-import React,  { useState } from 'react'
-import Button from "@mui/material/Button";
-import { ThemeProvider } from "@mui/material";
+import React,  { useEffect, useState } from 'react'
+import { ThemeProvider, Fab } from "@mui/material";
 import { appTheme } from "../themes/themes";
-
-
-
 
 function Login(props) {
     
@@ -16,34 +12,25 @@ function Login(props) {
     const AUTH_URL = AUTH_ENDPOINT + "?client_id=" + CLIENT_ID + "&response_type=" + RESPONSE_TYPE + "&redirect_uri=" + REDIRECT_URI + "&scope=" + SCOPES
     const {code} = props
 
-    
-    const login = () => {
-        console.log(code)
-    
 
-    }
-    const logout = () => {
-        //TODO: send back to start, and clear url
-        console.log(code)
-    }
-
+    useEffect(() => {
+        var url = new URL(window.location);  
+        if (url.searchParams.get('code') == 'restart') {        
+            url.searchParams.delete('code');
+            window.location.href = url;
+        }
+    });
     return (
         <ThemeProvider theme={appTheme}> 
-            {code ?
-                <Button 
-                variant="filled"
-                onClick={logout}
-                >
-                    Logout and Restart
-                </Button>
-                :
-                <Button 
-                variant="filled"
-                href={AUTH_URL}
+
+                <Fab 
+                    variant="extended"
+                    color="info"
+                    href={AUTH_URL}
                 >
                     Login with Spotify
-                </Button>
-            }
+                </Fab>
+
         </ThemeProvider>
         )
 }

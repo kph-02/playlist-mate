@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import '../App.css';
-import { ThemeProvider } from "@mui/material";
+import { ThemeProvider, Typography } from "@mui/material";
 import TextField from "@mui/material/TextField";
 import Fab from "@mui/material/Fab";
 import { appTheme } from "../themes/themes";
@@ -16,15 +15,20 @@ function TitleDetails(props) {
 
     return (
         <ThemeProvider theme={appTheme}>
-            <TextField
-                helperText="Give your playlist a name"
+            <Typography sx={{ mx: 10, my: 2}} variant="h3" color="textPrimary">
+                Let's start with a title
+            </Typography>
+            <TextField 
+                sx={{ mx: 10, my: 2 }}
                 label="Playlist Title"
                 onChange={handleChange('playlistTitle')}
                 defaultValue={values.playlistTitle}
             />
-            <br/>
             <Fab
+                sx={{ mx: 10, my: 2 }}
                 variant="extended"
+                color="primary"
+
                 onClick={continueStep}
             >
                 Next

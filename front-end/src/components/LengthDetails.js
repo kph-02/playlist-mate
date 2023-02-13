@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import '../App.css';
-import { ThemeProvider, Slider, Stack, Fab } from "@mui/material";
+import { Typography, ThemeProvider, Slider, Stack, Fab, IconButton } from "@mui/material";
 import { appTheme } from "../themes/themes";
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+
 
 function LengthDetails(props) {
 
@@ -25,6 +26,11 @@ function LengthDetails(props) {
         console.log("2: " + values.coreItemTwo)
         console.log("3: " + values.coreItemThree)
         console.log("Desired Length: " + values.desiredLength);
+    }
+
+    const backStep = e => {
+        e.preventDefault();
+        props.previousStep();
     }
 
     useEffect(() => {
@@ -153,15 +159,31 @@ function LengthDetails(props) {
 
     return (
         <ThemeProvider theme={appTheme}>
-            <h1>Desired estimated length</h1>
-            <Stack spacing={2} direction="row" sx={{ mb: 1 }} alignItems="center">
+            <IconButton 
+                sx={{ 
+                    mr:30, 
+                }} 
+                onClick={backStep} color="secondary">
+                <ArrowBackIcon/>
+            </IconButton>
+            <Typography 
+                sx={{ mx: 5, my: 2}}
+                variant="h3" 
+                color="textPrimary">
+                Desired Length
+            </Typography>
+            <Stack spacing={3} direction="row" sx={{ my: 5 }} alignItems="center">
                 { (minDesiredLength == 0) ?
-                    <h3>Loading Min Time</h3>
+                    <Typography variant="h4" color="textPrimary">
+                    ...
+                    </Typography>
                     :
-                    <h3>{minDesiredLengthText}</h3>
+                    <Typography variant="h4" color="textPrimary">
+                    {minDesiredLengthText}
+                    </Typography>
                 }
-                
                 <Slider 
+                    sx={{width: 200 }}
                     aria-label="desiredLength"
                     min={minDesiredLength}
                     max={18000}
@@ -169,10 +191,13 @@ function LengthDetails(props) {
                     valueLabelFormat={value => <div>{secToDisplay(value)}</div>}
                     onChange={handleChange('desiredLength')}
                 />
-                <h3>5 h</h3>
+                <Typography variant="h4" color="textPrimary">
+                    5H
+                </Typography>
             </Stack>
             <Fab
                 variant="extended"
+                color="primary"
                 onClick={finalStep}
             >
                 Generate sounds

@@ -30,6 +30,7 @@ async function generateMinedBank(accessToken, keywords, isInstrumental) {
   let nonInstrumentalTracks = new Set();
 
   for (let i = 0; i < MAX_SEARCH_PAGE_LIMIT; i++) {
+    console.log("Searching playlists at " + (i * 50) + "to" +  ((i + 1)*50))
     if (allSongsSeen) {
       break;
     }
@@ -55,11 +56,13 @@ async function generateMinedBank(accessToken, keywords, isInstrumental) {
                 if (isInstrumental == 'true') {
                   let playlistTrackIDs = "";
                   for (let k = 0; k < currPlaylistLength; k++) {
-                    if (k == 0) {
-                      playlistTrackIDs = data2.tracks.items[k].track.id
-                    } else {
-                      playlistTrackIDs += ","
-                      playlistTrackIDs += data2.tracks.items[k].track.id
+                    if (data2.tracks.items[k].track != null) {
+                      if (k == 0) {
+                        playlistTrackIDs = data2.tracks.items[k].track.id
+                      } else {
+                        playlistTrackIDs += ","
+                        playlistTrackIDs += data2.tracks.items[k].track.id
+                      }
                     }
                   }
                   if (playlistTrackIDs != "") {
@@ -381,14 +384,16 @@ async function generatePlaylist(req, res) {
   let minedSetOne = [];
   
   console.log("Assembling final playlist")
+  let minedBankIndex = 0
   if (numCoreItems == 1) {
     coreItemOneSet = await generateMinimumCoreItemSet(req.query.accessToken, req.query.coreItemOne, coreItemOneBank)
+    let coreItemOneMinSetLength = coreItemOneSet.length
     for (let i = 0; i < coreItemOneSet.length; i++) {
+      console.log(coreItemOneSet[i])
       currLength += coreItemOneSet[i].duration
     }
     let count = 0
-    let minedBankIndex = 0
-    let coreItemOneBankIndex = 0
+    let coreItemOneBankIndex = coreItemOneMinSetLength
     while (currLength <= req.query.desiredLength) {
       if (count == 0) {
         if (minedBankIndex < minedBank.length && minedBank[minedBankIndex] != undefined) {
@@ -412,7 +417,9 @@ async function generatePlaylist(req, res) {
   } else if (numCoreItems == 2) {
     let coreItemTwoSet = [];
     coreItemOneSet = await generateMinimumCoreItemSet(req.query.accessToken, req.query.coreItemOne, coreItemOneBank)
+    let coreItemOneMinSetLength = coreItemOneSet.length
     coreItemTwoSet = await generateMinimumCoreItemSet(req.query.accessToken, req.query.coreItemTwo, coreItemTwoBank)
+    let coreItemTwoMinSetLength = coreItemOneSet.length
     for (let i = 0; i < coreItemOneSet.length; i++) {
       currLength += coreItemOneSet[i].duration
     }
@@ -420,9 +427,8 @@ async function generatePlaylist(req, res) {
       currLength += coreItemTwoSet[i].duration
     }
     let count = 0
-    let minedBankIndex = 0
-    let coreItemOneBankIndex = 0
-    let coreItemTwoBankIndex = 0
+    let coreItemOneBankIndex = coreItemOneMinSetLength
+    let coreItemTwoBankIndex = coreItemTwoMinSetLength
     while (currLength <= req.query.desiredLength) {
       if (count == 0) {
         if (minedBankIndex < minedBank.length && minedBank[minedBankIndex] != undefined) {
@@ -455,8 +461,11 @@ async function generatePlaylist(req, res) {
     let coreItemThreeSet = [];
     let minedSetTwo = [];
     coreItemOneSet = await generateMinimumCoreItemSet(req.query.accessToken, req.query.coreItemOne, coreItemOneBank)
+    let coreItemOneMinSetLength = coreItemOneSet.length
     coreItemTwoSet = await generateMinimumCoreItemSet(req.query.accessToken, req.query.coreItemTwo, coreItemTwoBank)
+    let coreItemTwoMinSetLength = coreItemOneSet.length
     coreItemThreeSet = await generateMinimumCoreItemSet(req.query.accessToken, req.query.coreItemThree, coreItemThreeBank)
+    let coreItemThreeMinSetLength = coreItemOneSet.length
     for (let i = 0; i < coreItemOneSet.length; i++) {
       currLength += coreItemOneSet[i].duration
     }
@@ -467,10 +476,9 @@ async function generatePlaylist(req, res) {
       currLength += coreItemThreeSet[i].duration
     }
     let count = 0
-    let minedBankIndex = 0
-    let coreItemOneBankIndex = 0
-    let coreItemTwoBankIndex = 0
-    let coreItemThreeBankIndex = 0
+    let coreItemOneBankIndex = coreItemOneMinSetLength
+    let coreItemTwoBankIndex = coreItemOneMinSetLength
+    let coreItemThreeBankIndex = coreItemOneMinSetLength
     while (currLength <= req.query.desiredLength) {
       if (count == 0) {
         if (minedBankIndex < minedBank.length && minedBank[minedBankIndex] != undefined) {
@@ -514,6 +522,25 @@ async function generatePlaylist(req, res) {
       }
     }
     finalPlaylist = [...coreItemOneSet, ...minedSetOne, ...coreItemTwoSet, ...minedSetTwo, ...coreItemThreeSet]
+    
+    //Clean up by removing duplicates and replaces with next in mined set. (Removing null items requires more API calls)
+    let playlistSet = new Set();
+    for (let i = 0; i < finalPlaylist.length; i++) {
+      if (playlistSet.has(finalPlaylist[i].id)) {
+        if (minedBankIndex < minedBank.length  && minedBank[minedBankIndex] != undefined && currLength <= req.query.desiredLength) {
+          finalPlaylist.splice(i, 1, minedBank[minedBankIndex])
+          minedBankIndex++
+        }
+      //Null song check
+      /*
+      } else if (){ v
+
+      }
+      */
+      } else {
+        playlistSet.add(finalPlaylist[i].id)
+      }
+    }
   }
 
   /* View final playlist 

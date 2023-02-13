@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from "react";
-import '../App.css';
-import { ThemeProvider, TextField, Fab } from "@mui/material";
-import pmLogo from '../assets/Playlist-Mate.png';
+import { List, ListItem, ListItemAvatar, Avatar, ListItemText, Divider, Typography, ThemeProvider, Fab } from "@mui/material";
+import pmLogo from '../assets/Playlist-Mate-Logo.png';
 import axios from 'axios';
+import Login from "./Login";
 
 import { appTheme } from "../themes/themes";
+import SplashScreen from "./SplashScreen";
 
 function PlaylistDisplay(props) {
 
     const [playlistGenerated, setPlaylistGenerated] = useState(false);
-    const { values, handleChange } = props;
+    const { values, handleChange, logout } = props;
     const accessToken = values.accessToken;
     const [playlistDescription, setPlaylistDescription] = useState("");
-
-    const [backendData, setBackendData] = useState()
-
+    const[playlistItems, setPlaylistItems] = useState([]);
+    const [backendData, setBackendData] = useState({});
+    const screen = "playlistDisplay"
 
     var getQueryParameters = {
         method: 'GET',
@@ -23,6 +24,56 @@ function PlaylistDisplay(props) {
             'Authorization': 'Bearer ' + accessToken
         }
     } 
+
+    async function getPlaylistItems() {
+        let playlistLength = backendData.finalPlaylist.length
+        let playlistTracks = backendData.finalPlaylist;
+        let numBatchCalls = Math.ceil(playlistLength/50)
+        let playlistItemsArray = [];
+
+        for (let i = 0; i < numBatchCalls; i++) {
+            let playlistOffset = i * 50;
+            let currQueryString = "";
+            if (i == numBatchCalls - 1) {
+                for (let j = playlistOffset; j < playlistLength; j++) {
+                    let currTrackID = playlistTracks[j].id
+                    if (j == playlistLength - 1) {
+                        currQueryString += currTrackID
+                    } else {
+                        currQueryString += currTrackID
+                        currQueryString+= ","
+                    }
+                }
+            } else {
+                for (let j = playlistOffset; j < playlistOffset + 50; j++) {
+                    let currTrackID = playlistTracks[j].id
+                    if (j == (playlistOffset + 50) - 1) {
+                        currQueryString += currTrackID
+                    } else {
+                        currQueryString += currTrackID
+                        currQueryString+= ","
+                    }
+                }
+            }
+            //Insert Batch call to populate items
+            var returnedTracks = await fetch('https://api.spotify.com/v1/tracks?market=US&ids=' + currQueryString , getQueryParameters)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.tracks.length != 0) {
+                        for (let i = 0; i < data.tracks.length; i++) {
+                            let currItem = {
+                                name: data.tracks[i].name,
+                                artist: data.tracks[i].artists[0].name,
+                                image: data.tracks[i].album.images[0].url
+                            }
+                            playlistItemsArray.push(currItem);
+                        }
+                    }
+            });
+        }
+        setPlaylistItems(playlistItemsArray);
+
+    }
 
     async function getCoreItemName(coreItem) {
         let coreItemName = "";
@@ -74,13 +125,12 @@ function PlaylistDisplay(props) {
             instrumentalString = "instrumental"
         }
         let generatedDescription = values.keywords + " " + instrumentalString + " playlist with " + coreItemsString + ". Made with Playlist Mate @ playlistmate.app"
-        return generatedDescription
+        setPlaylistDescription(generatedDescription)        
     }
 
     async function addToSpotify() {
         
         //Create playlist description
-        let playlistDescription = await generatePlaylistDescription()
 
         let userID = "";
         let playlistID = "";
@@ -120,7 +170,7 @@ function PlaylistDisplay(props) {
         }
         
         //Add tracks to playlist
-
+        console.log(backendData)
         let playlistTracks = backendData.finalPlaylist;
         let playlistLength = playlistTracks.length
         let numTrackInsertCalls = Math.ceil(playlistLength / 100)
@@ -164,32 +214,94 @@ function PlaylistDisplay(props) {
         console.log(values)
         axios.get('http://localhost:3001/generatePlaylist', {
             params: values
-        }).then((res) => {
-            console.log(res.data)
+        }).then(async (res) => {
             if (res.data.finalPlaylist.length != 0) {
                 setPlaylistGenerated(true)
                 setBackendData(res.data)
+                await generatePlaylistDescription()
             }
         }).catch(error => {
             console.log(error);
         });
     }, [])
 
+    useEffect(() => {
+        async function fetchData() {
+            if (backendData.hasOwnProperty('finalPlaylist')) {
+                await getPlaylistItems()
+            }
+        }
+        fetchData();
+    }, [backendData])
+
     return (
         <ThemeProvider theme={appTheme}>
-            { (playlistGenerated == false)  ?
-                <img  src={pmLogo} alt="logo"/>
+            { ((playlistGenerated == false) || (playlistDescription == "") || (playlistItems.length == 0))  ?
+                <SplashScreen
+                    screen={screen}
+                />
                 :
-                <div>            
+                <div>
+                    <Typography 
+                        sx={{ mx: 5, my: 2}}
+                        variant="h3" 
+                        color="textPrimary">
+                        {values.playlistTitle}
+                    </Typography>
+                    <Typography 
+                        sx={{ mx: 5, my: 2}}                    
+                        variant="h4" 
+                        color="textPrimary">
+                        {playlistDescription.substring(0, playlistDescription.length - 43)}
+                    </Typography>             
                     <Fab
                         variant="extended"
+                        color="info"
+
                         onClick={addToSpotify}
                     >
                         Add to Spotify
                     </Fab>
-                    <h1>Playlist</h1>
+                    <List
+                        sx={{
+                            width: 360,
+                            maxHeight: 400, 
+                            overflow: 'auto',
+                            zIndex: 10,
+                            mx: 2,
+                            my: 3,
+                            border:1,
+                            borderColor: '#B2B2B2',
+                            borderRadius: '10px' 
+                        }}
+                    >
+                        {playlistItems.map((item, i) => {
+                            return (
+                                <div>
+                                    <ListItem>
+                                        <ListItemAvatar                              
+                                            sx={{mr: 1}}>   
+                                            <Avatar
+                                                variant="rounded"
+                                                sx={{ width: 64, height: 64 }}
+                                                src={item.image}
+                                            />
+                                        </ListItemAvatar>
+                                        <ListItemText primary={item.name} secondary={item.artist} />
+                                    </ListItem>
+                                    <Divider variant="inset" component="li" />
+                                </div>
+                            )
+                        })}
+                    </List>
+                    <Fab
+                        variant="extended"
+                        color="primary"
+                        onClick={logout}
+                    >
+                        Logout and Restart
+                    </Fab>
                 </div>
-                
             }
             <br/>
         </ThemeProvider>

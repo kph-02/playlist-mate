@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
-import '../App.css';
-import { ThemeProvider, TextField, Fab, Autocomplete, Container, List, ListItem, ListItemText, ListItemAvatar, ListItemButton, Avatar, Divider } from "@mui/material";
+import { Box, Stack, Typography, IconButton, ThemeProvider, TextField, Fab, Autocomplete, Container, List, ListItem, ListItemText, ListItemAvatar, ListItemButton, Avatar, Divider } from "@mui/material";
 import { appTheme } from "../themes/themes";
 import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
-import { ImageSearch, SettingsOverscanOutlined } from "@material-ui/icons";
+import RemoveCircleOutlineOutlinedIcon from '@mui/icons-material/RemoveCircleOutlineOutlined';import { ImageSearch, SettingsOverscanOutlined } from "@material-ui/icons";
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import zIndex from "@mui/material/styles/zIndex";
+
 
 
 function CoreItemsDetails(props) {
@@ -28,6 +30,11 @@ function CoreItemsDetails(props) {
     
     const { values, handleCoreItems } = props;
     const accessToken = values.accessToken;
+
+    const backStep = e => {
+        e.preventDefault();
+        props.previousStep();
+    }
 
     const handleCoreItemsInc = () => {
         setCoreItemsNums(coreItemsNums + 1);
@@ -66,12 +73,25 @@ function CoreItemsDetails(props) {
         props.nextStep()
     }
     
+    const removeItemOne = () => {
+        setItemOneType('');
+    }
+
+    const removeItemTwo = () => {
+        setItemTwoType('');
+        setCoreItemsNums(0);
+    }
+
+    const removeItemThree = () => {
+        setItemThreeType('');
+        setCoreItemsNums(1);
+    }
 
     const coreItemOptions = ['Artist', 'Song', 'Album'];
     
-    let coreItemCompOne = <br/>
-    let coreItemCompTwo = <br/>
-    let coreItemCompThree = <br/>
+    let coreItemCompOne = <></>
+    let coreItemCompTwo = <></>
+    let coreItemCompThree = <></>
 
     //Core Item Type switching reset
     useEffect(() => {
@@ -214,30 +234,56 @@ function CoreItemsDetails(props) {
     }
 
     if (coreItemsNums >= 0) {
-        coreItemCompOne =             
-        <div>
+        coreItemCompOne =   
+        <Stack
+            sx={{ my: 1 }}   
+            direction="row">
+            {(coreItemsNums == 0) ?
+            <RemoveCircleOutlineOutlinedIcon
+                sx={{my: 2}}
+                color="secondary"
+                onClick={removeItemOne}
+            /> : 
+            <RemoveCircleOutlineOutlinedIcon
+                sx={{my: 2}}
+                color="#181818"
+            />
+            }
             <Autocomplete
                 id="combo-box-demo"
                 options={coreItemOptions}
-                sx={{ width: 150 }}
+                sx={{ width: 130, mr: 1 }}
                 renderInput={(params) => <TextField {...params} label="Type"/>}
                 value={itemOneType}
                 onChange={(event, newValue) => {setItemOneType(newValue);}}    
             />
-            <br/>
-            {(itemOneType != '') &&
+            <Stack
+                direction="column">
+            {(itemOneType != '') ?
             <TextField
                 label="Search"
                 value={itemOneQuery}
                 onChange={handleQueryOneChange}  
-                type="search"  
-            />
+                type="search" 
+                sx={{ width: 200,
+                zIndex: 1}}
+            /> :
+            <Box
+            sx={{
+              width: 200,
+              height: 5,
+              backgroundColor: 'primary',
+              zIndex: 1
+            }}
+          />
             }
             {((itemOneQuery != '') && (itemOneURI == '')) &&
                 <List
                 sx={{
-                    width: '100%',
-                    maxWidth: 360,
+                    width: 200,
+                    maxHeight: 300, 
+                    overflow: 'auto',
+                    zIndex: 10
                 }}
                 >
                     {itemOneResults.map((item, i) => {
@@ -246,7 +292,8 @@ function CoreItemsDetails(props) {
                                 <ListItem
                                 onClick={handleItemOneSelect(item.uri, item.name)}
                                 >
-                                    <ListItemAvatar>
+                                    <ListItemAvatar                              
+                                        sx={{mr: 1}}>   
                                         { itemOneType == "Song" && 
                                             <Avatar
                                                 variant="rounded"
@@ -282,34 +329,61 @@ function CoreItemsDetails(props) {
                     })}
                     
                 </List>
-            }   
-        </div>
+            }  
+            </Stack> 
+        </Stack>          
+
     }
     if (coreItemsNums >= 1) {
-        coreItemCompTwo = 
-        <div>
+        coreItemCompTwo =   
+        <Stack
+            sx={{ my: 1 }}
+            direction="row">
+            {(coreItemsNums == 1) ?
+            <RemoveCircleOutlineOutlinedIcon
+                sx={{my: 2}}
+                color="secondary"
+                onClick={removeItemTwo}
+            /> :
+            <RemoveCircleOutlineOutlinedIcon
+                sx={{my: 2}}
+                color='transparent'
+            />
+            }
             <Autocomplete
                 id="combo-box-demo"
                 options={coreItemOptions}
-                sx={{ width: 150 }}
+                sx={{ width: 130, mr: 1 }}
                 renderInput={(params) => <TextField {...params} label="Type"/>}
                 value={itemTwoType}
                 onChange={(event, newValue) => {setItemTwoType(newValue);}}    
             />
-            <br/>
-            {(itemTwoType != '') &&
+            <Stack
+                direction="column">
+            {(itemTwoType != '') ?
             <TextField
                 label="Search"
                 value={itemTwoQuery}
-                onChange={handleQueryTwoChange}   
-                type="search"
+                onChange={handleQueryTwoChange}  
+                type="search" 
+                sx={{ width: 200, zIndex: 1}}
+            /> :
+            <Box
+            sx={{
+              width: 200,
+              height: 5,
+              backgroundColor: 'primary',
+              zIndex: 1
+            }}
             />
             }
             {((itemTwoQuery != '') && (itemTwoURI == '')) &&
                 <List
                 sx={{
-                    width: '100%',
-                    maxWidth: 360,
+                    width: 200,
+                    maxHeight: 300, 
+                    overflow: 'auto',
+                    zIndex: 10
                 }}
                 >
                     {itemTwoResults.map((item, i) => {
@@ -318,7 +392,8 @@ function CoreItemsDetails(props) {
                                 <ListItem
                                 onClick={handleItemTwoSelect(item.uri, item.name)}
                                 >
-                                    <ListItemAvatar>
+                                    <ListItemAvatar
+                                        sx={{mr: 1}}>
                                         { itemTwoType == "Song" && 
                                             <Avatar
                                                 variant="rounded"
@@ -354,34 +429,61 @@ function CoreItemsDetails(props) {
                     })}
                     
                 </List>
-            }   
-        </div>
+            }  
+            </Stack> 
+        </Stack>          
+
     } 
     if (coreItemsNums >= 2) {
-        coreItemCompThree = 
-        <div>
+        coreItemCompThree =   
+        <Stack
+            sx={{ my: 1 }}
+            direction="row">
+            {(coreItemsNums == 2) ?
+            <RemoveCircleOutlineOutlinedIcon
+                sx={{my: 2}}
+                color="secondary"
+                onClick={removeItemThree}
+            /> :
+            <RemoveCircleOutlineOutlinedIcon
+                sx={{my: 2}}
+                color='transparent'
+            />
+            }
             <Autocomplete
                 id="combo-box-demo"
                 options={coreItemOptions}
-                sx={{ width: 150 }}
+                sx={{ width: 130, mr: 1 }}
                 renderInput={(params) => <TextField {...params} label="Type"/>}
                 value={itemThreeType}
                 onChange={(event, newValue) => {setItemThreeType(newValue);}}    
             />
-            <br/>
-            {(itemThreeType != '') &&
+            <Stack
+                direction="column">
+            {(itemThreeType != '') ?
             <TextField
                 label="Search"
                 value={itemThreeQuery}
-                onChange={handleQueryThreeChange}
-                type="search"   
-            />
+                onChange={handleQueryThreeChange}  
+                type="search" 
+                sx={{ width: 200, zIndex: 1}}
+            /> :
+            <Box
+            sx={{
+              width: 200,
+              height: 5,
+              backgroundColor: 'primary',
+              zIndex: 1
+            }}
+          />
             }
             {((itemThreeQuery != '') && (itemThreeURI == '')) &&
                 <List
                 sx={{
-                    width: '100%',
-                    maxWidth: 360,
+                    width: 200,
+                    maxHeight: 300, 
+                    overflow: 'auto',
+                    zIndex: 10
                 }}
                 >
                     {itemThreeResults.map((item, i) => {
@@ -390,7 +492,8 @@ function CoreItemsDetails(props) {
                                 <ListItem
                                 onClick={handleItemThreeSelect(item.uri, item.name)}
                                 >
-                                    <ListItemAvatar>
+                                    <ListItemAvatar
+                                        sx={{mr: 1}}>
                                         { itemThreeType == "Song" && 
                                             <Avatar
                                                 variant="rounded"
@@ -424,28 +527,44 @@ function CoreItemsDetails(props) {
                             </div>
                         )
                     })}
-
+                    
                 </List>
-            }   
-        </div>
+            }  
+            </Stack> 
+        </Stack>          
     }
 
     return (
         <ThemeProvider theme={appTheme}>
-            <h2>Choose up to 3 Core Items</h2>
+             <IconButton 
+                sx={{ 
+                    mr:30, 
+                }} 
+                onClick={backStep} color="secondary">
+                <ArrowBackIcon/>
+            </IconButton>
+            <Typography sx={{ mx: 10, my: 2}} variant="h3" color="textPrimary">
+                Pick up to 3 "Samples"
+            </Typography>
+
             {coreItemCompOne}
             {coreItemCompTwo}
             {coreItemCompThree}
+            {coreItemsNums < 2 &&
             <AddCircleOutlineRoundedIcon
-                    onClick={handleCoreItemsInc}
+                sx={{ my: 2}}
+                onClick={handleCoreItemsInc}
+                color="secondary"
             />
-            <br/>
-            <Fab
-                variant="extended"
-                onClick={continueStep}
-            >
-                Next
-            </Fab>
+            }
+                <Fab
+                    variant="extended"
+                    color="primary"
+
+                    onClick={continueStep}
+                >
+                    Next
+                </Fab>
 
         </ThemeProvider>
     );
