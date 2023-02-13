@@ -7,8 +7,12 @@ import { appTheme } from "../themes/themes";
 function TitleDetails(props) {
 
     const continueStep = e => {
-        e.preventDefault();
-        props.nextStep();
+        if (values.playlistTitle == '') {
+            alert("Please enter a title.")
+        } else {
+            e.preventDefault();
+            props.nextStep();
+        }
     }
 
     const { values, handleChange } = props;

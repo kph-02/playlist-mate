@@ -544,11 +544,11 @@ async function generatePlaylist(req, res) {
           minedBankIndex++
         }
       //Null song check
-      /*
-      } else if (){ v
-
-      }
-      */
+      } else if (await isSongTakenDown(req.query.accessToken, finalPlaylist[i].id) == true) {
+        if (minedBankIndex < minedBank.length  && minedBank[minedBankIndex] != undefined && currLength <= req.query.desiredLength) {
+          finalPlaylist.splice(i, 1, minedBank[minedBankIndex])
+          minedBankIndex++
+        }
       } else {
         playlistSet.add(finalPlaylist[i].id)
       }
@@ -566,6 +566,21 @@ async function generatePlaylist(req, res) {
   console.log("Final Playlist duration in seconds: " + currLength)
   console.log(req.query)
   res.status(200).send({finalPlaylist: finalPlaylist})
+}
+
+async function isSongTakenDown(accessToken, trackID) {
+  var getQueryParameters = {
+    method: 'GET',
+    headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + accessToken
+    }
+  }
+  var returnedTrack = await fetch('https://api.spotify.com/v1/tracks/' + trackID + '/?market=US' , getQueryParameters)
+  .then(response => response.json())
+  .then(data => {
+      return data.is_playable
+});
 }
 
 

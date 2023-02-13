@@ -9,8 +9,12 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 function VibeDetails(props) {
 
     const continueStep = e => {
-        e.preventDefault();
-        props.nextStep();
+        if (values.keywords == '') {
+            alert("Please enter genre keywords.")
+        } else {
+            e.preventDefault();
+            props.nextStep();
+        }
     }
     const backStep = e => {
         e.preventDefault();

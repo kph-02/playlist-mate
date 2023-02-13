@@ -10,22 +10,24 @@ function LengthDetails(props) {
     const accessToken = values.accessToken;
     const [minDesiredLength, setMinDesiredLength] = useState(0);
     const [minDesiredLengthText, setMinDesiredLengthText] = useState('');
+    const [maxDesiredLength, setMaxDesiredLength] = useState(18000);
 
     const finalStep = e => {
         if (values.desiredLength == 0) {
-            values.desiredLength = minDesiredLength
+            alert("Please set a desired length.")
+        } else {
+            e.preventDefault();
+            props.nextStep();
+            console.log("Playlist Title: " + values.playlistTitle);
+            console.log("Keywords: " + values.keywords);
+            console.log("isInstrumental: " + values.isInstrumental);
+            console.log("isPublic: " + values.isPublic);
+            console.log("Core Items: ")
+            console.log("1: " + values.coreItemOne)
+            console.log("2: " + values.coreItemTwo)
+            console.log("3: " + values.coreItemThree)
+            console.log("Desired Length: " + values.desiredLength);
         }
-        e.preventDefault();
-        props.nextStep();
-        console.log("Playlist Title: " + values.playlistTitle);
-        console.log("Keywords: " + values.keywords);
-        console.log("isInstrumental: " + values.isInstrumental);
-        console.log("isPublic: " + values.isPublic);
-        console.log("Core Items: ")
-        console.log("1: " + values.coreItemOne)
-        console.log("2: " + values.coreItemTwo)
-        console.log("3: " + values.coreItemThree)
-        console.log("Desired Length: " + values.desiredLength);
     }
 
     const backStep = e => {
@@ -84,6 +86,10 @@ function LengthDetails(props) {
             } else if (values.coreItemThree.substring(8,13) == 'track') {
                 itemThreeDesiredLength = await trackMinLenSearch(values.coreItemThree)
             }
+        }
+        if ((itemOneDesiredLength + itemTwoDesiredLength + itemThreeDesiredLength) > 18000 ) {
+            let updatedMaxDesiredLength = (itemOneDesiredLength + itemTwoDesiredLength + itemThreeDesiredLength + 300)
+            setMaxDesiredLength(updatedMaxDesiredLength)
         }
         return (itemOneDesiredLength + itemTwoDesiredLength + itemThreeDesiredLength)
     }
@@ -167,33 +173,33 @@ function LengthDetails(props) {
                 <ArrowBackIcon/>
             </IconButton>
             <Typography 
-                sx={{ mx: 5, my: 2}}
+                sx={{ mx: 5, mt: 2, mb: 2}}
                 variant="h3" 
                 color="textPrimary">
                 Desired Length
             </Typography>
             <Stack spacing={3} direction="row" sx={{ my: 5 }} alignItems="center">
                 { (minDesiredLength == 0) ?
-                    <Typography variant="h4" color="textPrimary">
+                    <Typography  sx={{x: 1}} variant="h4" color="textPrimary">
                     ...
                     </Typography>
                     :
-                    <Typography variant="h4" color="textPrimary">
+                    <Typography  sx={{mx: 1}} variant="h4" color="textPrimary">
                     {minDesiredLengthText}
                     </Typography>
                 }
                 <Slider 
-                    sx={{width: 200 }}
+                    sx={{width: 225, my: 10}}
                     aria-label="desiredLength"
                     min={minDesiredLength}
-                    max={18000}
+                    max={maxDesiredLength}
                     valueLabelDisplay="auto"
                     valueLabelFormat={value => <div>{secToDisplay(value)}</div>}
                     onChange={handleChange('desiredLength')}
                 />
-                <Typography variant="h4" color="textPrimary">
-                    5H
-                </Typography>
+                <Typography sx={{ px: 2, minWidth: 35}} variant="h4" color="textPrimary">
+                    {secToDisplay(maxDesiredLength)}
+                </Typography> 
             </Stack>
             <Fab
                 variant="extended"

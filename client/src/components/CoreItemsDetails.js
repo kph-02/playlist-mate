@@ -69,8 +69,12 @@ function CoreItemsDetails(props) {
     }
     
     const continueStep = e => {
-        e.preventDefault();
-        props.nextStep()
+        if (values.coreItemOne == '') {
+            alert("Please enter at least 1 sample.")
+        } else {
+            e.preventDefault();
+            props.nextStep();
+        }
     }
     
     const removeItemOne = () => {
@@ -95,24 +99,25 @@ function CoreItemsDetails(props) {
 
     //Core Item Type switching reset
     useEffect(() => {
-        setItemOneResults([])
+        console.log("Changed Type")
         setItemOneQuery('')
         setItemOneURI('')
         setItemOneName('')
+        setItemOneResults([])
     }, [itemOneType])
 
     useEffect(() => {
-        setItemTwoResults([])
         setItemTwoQuery('')
         setItemTwoURI('')
         setItemTwoName('')
+        setItemTwoResults([])
     }, [itemTwoType])
 
     useEffect(() => {
-        setItemThreeResults([])
         setItemThreeQuery('')
         setItemThreeURI('')
         setItemThreeName('')
+        setItemThreeResults([])
     }, [itemThreeType])
 
     //Search
@@ -124,23 +129,39 @@ function CoreItemsDetails(props) {
         if (itemOneQuery != itemOneName) {
             setItemOneURI('')
         }
+        if (itemTwoQuery != itemTwoName) {
+            setItemTwoQuery('')
+        }
+        if (itemThreeQuery != itemThreeName) {
+            setItemThreeQuery('')
+        }
     }, [itemOneQuery])
     useEffect(() => {
         if (itemTwoQuery != '') {
             searchTwo()
         }
-        
         if (itemTwoQuery != itemTwoName) {
             setItemTwoURI('')
+        }
+        if (itemOneQuery != itemOneName) {
+            setItemOneQuery('')
+        }
+        if (itemThreeQuery != itemThreeName) {
+            setItemThreeQuery('')
         }
     }, [itemTwoQuery])
     useEffect(() => {
         if (itemThreeQuery != '') {
             searchThree()
         }
-        
         if (itemThreeQuery != itemThreeName) {
             setItemThreeURI('')
+        }
+        if (itemOneQuery != itemOneName) {
+            setItemOneQuery('')
+        }
+        if (itemTwoQuery != itemTwoName) {
+            setItemTwoQuery('')
         }
     }, [itemThreeQuery])
 
@@ -294,20 +315,20 @@ function CoreItemsDetails(props) {
                                 >
                                     <ListItemAvatar                              
                                         sx={{mr: 1}}>   
-                                        { itemOneType == "Song" && 
+                                        { (itemOneType == "Song" && item.album != undefined) && 
                                             <Avatar
                                                 variant="rounded"
                                                 sx={{ width: 64, height: 64 }}
                                                 src={item.album.images[0].url}
                                             />
                                         }
-                                        { (itemOneType != "Song" && item.images.length != 0) &&
+                                        { (itemOneType != "Song" && item.images != undefined && item.images.length != 0) &&
                                             <Avatar
                                                 variant="rounded"
                                                 sx={{ width: 64, height: 64 }}
                                                 src={item.images[0].url}
                                             />}
-                                        { (itemOneType != "Song" && item.images.length == 0) &&
+                                        { (itemOneType != "Song" && item.images != undefined && item.images.length == 0) &&
                                             <Avatar
                                                 variant="rounded"
                                                 sx={{ width: 64, height: 64 }}
@@ -317,11 +338,17 @@ function CoreItemsDetails(props) {
                                             </Avatar>
                                         }
                                     </ListItemAvatar>
-                                    { (itemOneType == "Artist") ?
-                                        <ListItemText primary={item.name}  />
-                                        :
-                                        <ListItemText primary={item.name} secondary={item.artists[0].name} />
-                                    }
+                                        <>
+                                        {(itemOneType == "Artist") ?
+                                            <ListItemText primary={item.name}  />
+                                            :
+                                            <>
+                                                { (item.artists != undefined) &&
+                                                    <ListItemText primary={item.name} secondary={item.artists[0].name} />
+                                                }
+                                            </>
+                                        }
+                                        </>
                                 </ListItem>
                                 <Divider variant="inset" component="li" />
                             </div>
@@ -337,17 +364,17 @@ function CoreItemsDetails(props) {
     if (coreItemsNums >= 1) {
         coreItemCompTwo =   
         <Stack
-            sx={{ my: 1 }}
+            sx={{ my: 1 }}   
             direction="row">
             {(coreItemsNums == 1) ?
             <RemoveCircleOutlineOutlinedIcon
                 sx={{my: 2}}
                 color="secondary"
                 onClick={removeItemTwo}
-            /> :
+            /> : 
             <RemoveCircleOutlineOutlinedIcon
                 sx={{my: 2}}
-                color='transparent'
+                color="#181818"
             />
             }
             <Autocomplete
@@ -366,7 +393,8 @@ function CoreItemsDetails(props) {
                 value={itemTwoQuery}
                 onChange={handleQueryTwoChange}  
                 type="search" 
-                sx={{ width: 200, zIndex: 1}}
+                sx={{ width: 200,
+                zIndex: 1}}
             /> :
             <Box
             sx={{
@@ -375,7 +403,7 @@ function CoreItemsDetails(props) {
               backgroundColor: 'primary',
               zIndex: 1
             }}
-            />
+          />
             }
             {((itemTwoQuery != '') && (itemTwoURI == '')) &&
                 <List
@@ -392,22 +420,22 @@ function CoreItemsDetails(props) {
                                 <ListItem
                                 onClick={handleItemTwoSelect(item.uri, item.name)}
                                 >
-                                    <ListItemAvatar
-                                        sx={{mr: 1}}>
-                                        { itemTwoType == "Song" && 
+                                    <ListItemAvatar                              
+                                        sx={{mr: 1}}>   
+                                        { (itemTwoType == "Song" && item.album != undefined) && 
                                             <Avatar
                                                 variant="rounded"
                                                 sx={{ width: 64, height: 64 }}
                                                 src={item.album.images[0].url}
                                             />
                                         }
-                                        { (itemTwoType != "Song" && item.images.length != 0) &&
+                                        { (itemTwoType != "Song" && item.images != undefined && item.images.length != 0) &&
                                             <Avatar
                                                 variant="rounded"
                                                 sx={{ width: 64, height: 64 }}
                                                 src={item.images[0].url}
                                             />}
-                                        { (itemTwoType != "Song" && item.images.length == 0) &&
+                                        { (itemTwoType != "Song" && item.images != undefined && item.images.length == 0) &&
                                             <Avatar
                                                 variant="rounded"
                                                 sx={{ width: 64, height: 64 }}
@@ -417,11 +445,17 @@ function CoreItemsDetails(props) {
                                             </Avatar>
                                         }
                                     </ListItemAvatar>
-                                    { (itemTwoType == "Artist") ?
-                                        <ListItemText primary={item.name}  />
-                                        :
-                                        <ListItemText primary={item.name} secondary={item.artists[0].name} />
-                                    }
+                                        <>
+                                        {(itemTwoType == "Artist") ?
+                                            <ListItemText primary={item.name}  />
+                                            :
+                                            <>
+                                                { (item.artists != undefined) &&
+                                                    <ListItemText primary={item.name} secondary={item.artists[0].name} />
+                                                }
+                                            </>
+                                        }
+                                        </>
                                 </ListItem>
                                 <Divider variant="inset" component="li" />
                             </div>
@@ -437,17 +471,17 @@ function CoreItemsDetails(props) {
     if (coreItemsNums >= 2) {
         coreItemCompThree =   
         <Stack
-            sx={{ my: 1 }}
+            sx={{ my: 1 }}   
             direction="row">
             {(coreItemsNums == 2) ?
             <RemoveCircleOutlineOutlinedIcon
                 sx={{my: 2}}
                 color="secondary"
                 onClick={removeItemThree}
-            /> :
+            /> : 
             <RemoveCircleOutlineOutlinedIcon
                 sx={{my: 2}}
-                color='transparent'
+                color="#181818"
             />
             }
             <Autocomplete
@@ -466,7 +500,8 @@ function CoreItemsDetails(props) {
                 value={itemThreeQuery}
                 onChange={handleQueryThreeChange}  
                 type="search" 
-                sx={{ width: 200, zIndex: 1}}
+                sx={{ width: 200,
+                zIndex: 1}}
             /> :
             <Box
             sx={{
@@ -492,22 +527,22 @@ function CoreItemsDetails(props) {
                                 <ListItem
                                 onClick={handleItemThreeSelect(item.uri, item.name)}
                                 >
-                                    <ListItemAvatar
-                                        sx={{mr: 1}}>
-                                        { itemThreeType == "Song" && 
+                                    <ListItemAvatar                              
+                                        sx={{mr: 1}}>   
+                                        { (itemThreeType == "Song" && item.album != undefined) && 
                                             <Avatar
                                                 variant="rounded"
                                                 sx={{ width: 64, height: 64 }}
                                                 src={item.album.images[0].url}
                                             />
                                         }
-                                        { (itemThreeType != "Song" && item.images.length != 0) &&
+                                        { (itemThreeType != "Song" && item.images != undefined && item.images.length != 0) &&
                                             <Avatar
                                                 variant="rounded"
                                                 sx={{ width: 64, height: 64 }}
                                                 src={item.images[0].url}
                                             />}
-                                        { (itemThreeType != "Song" && item.images.length == 0) &&
+                                        { (itemThreeType != "Song" && item.images != undefined && item.images.length == 0) &&
                                             <Avatar
                                                 variant="rounded"
                                                 sx={{ width: 64, height: 64 }}
@@ -517,11 +552,17 @@ function CoreItemsDetails(props) {
                                             </Avatar>
                                         }
                                     </ListItemAvatar>
-                                    { (itemThreeType == "Artist") ?
-                                        <ListItemText primary={item.name}  />
-                                        :
-                                        <ListItemText primary={item.name} secondary={item.artists[0].name} />
-                                    }
+                                        <>
+                                        {(itemThreeType == "Artist") ?
+                                            <ListItemText primary={item.name}  />
+                                            :
+                                            <>
+                                                { (item.artists != undefined) &&
+                                                    <ListItemText primary={item.name} secondary={item.artists[0].name} />
+                                                }
+                                            </>
+                                        }
+                                        </>
                                 </ListItem>
                                 <Divider variant="inset" component="li" />
                             </div>
@@ -532,6 +573,7 @@ function CoreItemsDetails(props) {
             }  
             </Stack> 
         </Stack>          
+     
     }
 
     return (
@@ -543,7 +585,7 @@ function CoreItemsDetails(props) {
                 onClick={backStep} color="secondary">
                 <ArrowBackIcon/>
             </IconButton>
-            <Typography sx={{ mx: 10, my: 2}} variant="h3" color="textPrimary">
+            <Typography sx={{ mx: 10, my: 4}} variant="h3" color="textPrimary">
                 Pick up to 3 "Samples"
             </Typography>
 
@@ -552,12 +594,13 @@ function CoreItemsDetails(props) {
             {coreItemCompThree}
             {coreItemsNums < 2 &&
             <AddCircleOutlineRoundedIcon
-                sx={{ my: 2}}
+                sx={{ my: 4}}
                 onClick={handleCoreItemsInc}
                 color="secondary"
             />
             }
                 <Fab
+                    sx={{ my: 2}}
                     variant="extended"
                     color="primary"
 

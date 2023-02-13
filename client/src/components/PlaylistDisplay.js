@@ -157,6 +157,7 @@ function PlaylistDisplay(props) {
                     "public": values.isPublic
             })
         }
+        console.log(postCreateQueryParameters)
         var createPlaylist = await fetch('https://api.spotify.com/v1/users/' + userID + '/playlists', postCreateQueryParameters)
         .then(response => response.json())
         .then(data => {
