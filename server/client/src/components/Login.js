@@ -2,6 +2,7 @@ import React,  { useEffect, useState } from 'react'
 import { Typography, ThemeProvider, Fab } from "@mui/material";
 import { appTheme } from "../themes/themes";
 
+//Also change redirect URI in Spotify Developer Dashboard
 const LIVE_URL = "https://www.playlistmate.app/";
 //const LIVE_URL = "http://localhost:3000/"
 
