@@ -7,6 +7,9 @@ import Login from "./Login";
 import { appTheme } from "../themes/themes";
 import SplashScreen from "./SplashScreen";
 
+const LIVE_URL = "https://www.playlistmate.app";
+//const LIVE_URL = "http://localhost:3001"
+
 function PlaylistDisplay(props) {
 
     const [playlistGenerated, setPlaylistGenerated] = useState(false);
@@ -222,7 +225,7 @@ function PlaylistDisplay(props) {
 
     useEffect(() => {
         console.log(values)
-        axios.get('https://www.playlistmate.app/generatePlaylist', {
+        axios.get(LIVE_URL + '/generatePlaylist', {
             params: values
         }).then(async (res) => {
             if (res.data.finalPlaylist.length != 0) {

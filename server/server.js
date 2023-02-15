@@ -11,6 +11,8 @@ app.use(cors())
 app.use(bodyParser.json())
 
 const port = process.env.PORT || 3001
+const LIVE_URL = 'https://www.playlistmate.app/';
+//const LIVE_URL = 'http://localhost:3000/'
 
 //Serve static assets if in production
 if (process.env.NODE_ENV === 'production') {
@@ -588,7 +590,7 @@ app.post("/login", (req, res) => {
     console.log("Login Request received")
     const code = req.body.code
     const spotifyApi = new SpotifyWebApi({
-        redirectUri: 'https://www.playlistmate.app/',
+        redirectUri: LIVE_URL,
         clientId: '20f6d7c7a039406b855bb7337bb6dd25',
         clientSecret: '09f60c7d81d845cd993e51298d3fee71'
     })
@@ -610,7 +612,7 @@ app.post("/login", (req, res) => {
 app.post ('/refresh', (req, res) => {
   const refreshToken = req.body.refreshToken
   const spotifyApi = new SpotifyWebApi({
-    redirectUri: 'https://www.playlistmate.app/',
+    redirectUri: LIVE_URL,
     clientId: '20f6d7c7a039406b855bb7337bb6dd25',
     clientSecret: '09f60c7d81d845cd993e51298d3fee71',
     refreshToken,
