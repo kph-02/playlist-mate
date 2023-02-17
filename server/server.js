@@ -1,58 +1,30 @@
 const express = require('express');
 const SpotifyWebApi = require('spotify-web-api-node');
-const cors = require('cors');
+const cors = require('cors')
 const bodyParser = require('body-parser');
 const { response, query } = require('express');
 const { Heap } = require('heap-js');
 const e = require('express');
 const path = require('path');
-const http = require('http');
-const { Server } = require('socket.io');
+const app = express()
+app.use(cors())
+app.use(bodyParser.json())
 
-const app = express();
-app.use(cors());
-app.use(bodyParser.json());
-
-
-//Biggest determiner of time to load along with wifi speed
-const MAX_SEARCH_PAGE_LIMIT = 2;
-
-const port = process.env.PORT || 3001;
-
-const LIVE_URL = 'https://www.playlistmate.app';
-//const LIVE_URL = 'http://localhost:3000'
-
-const server = http.createServer(app)
-
-const io = new Server(server, {
-  
-  cors: {
-    origin: LIVE_URL,
-    methods: ["GET", "POST"],
-  },
-});
-
+const port = process.env.PORT || 3001
+const LIVE_URL = 'https://www.playlistmate.app/';
+//const LIVE_URL = 'http://localhost:3000/'
 
 //Serve static assets if in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static('client/build'))
+  app.get("/generatePlaylist", generatePlaylist);
   app.get('*', (req, res) => {
     res.sendFile(path.resolve(__dirname, 'client', 'build', 'index.html'));
   })
-} 
+}
 
-//WebSocket
-io.on("connection", (socket) => {
-  console.log(`User Connected:  ${socket.id}`);
-  socket.on("generate_playlist_request", async (data) => {
-    //req.query -> data.values
-    //console.log(data.values)
-    let returnValue = await generatePlaylist(data.values)
-    socket.emit("generate_playlist_return", returnValue)
-  });
-});
-
-
+//Biggest determiner of time to load along with wifi speed
+const MAX_SEARCH_PAGE_LIMIT = 1;
 
 async function generateMinedBank(accessToken, keywords, isInstrumental) {
   var queryParameters = {
@@ -377,25 +349,23 @@ async function generateMinimumCoreItemSet(accessToken, coreItem, coreItemBank) {
     return null
   }
 }
-
-async function generatePlaylist(values) {
-
+async function generatePlaylist(req, res) {
   console.log("Generating Playlist")
   //Each item in generated sets look like { id : *ID*, duration : *duration_in_s* }
-  let coreItemOneBank = await generateCoreItemBank(values.accessToken, values.coreItemOne, values.isInstrumental);
+  let coreItemOneBank = await generateCoreItemBank(req.query.accessToken, req.query.coreItemOne, req.query.isInstrumental);
   let coreItemTwoBank = [];
   let coreItemThreeBank = [];
   let numCoreItems = 1;
 
-  if (values.coreItemTwo != '') {
+  if (req.query.coreItemTwo != '') {
     numCoreItems = 2;
-    coreItemTwoBank = await generateCoreItemBank(values.accessToken, values.coreItemTwo, values.isInstrumental);
-    if (values.coreItemThree != '') {
+    coreItemTwoBank = await generateCoreItemBank(req.query.accessToken, req.query.coreItemTwo, req.query.isInstrumental);
+    if (req.query.coreItemThree != '') {
       numCoreItems = 3;
-      coreItemThreeBank = await generateCoreItemBank(values.accessToken, values.coreItemThree, values.isInstrumental);
+      coreItemThreeBank = await generateCoreItemBank(req.query.accessToken, req.query.coreItemThree, req.query.isInstrumental);
     }
   }
-  let minedBank = await generateMinedBank(values.accessToken, values.keywords, values.isInstrumental);
+  let minedBank = await generateMinedBank(req.query.accessToken, req.query.keywords, req.query.isInstrumental);
   console.log("Finished Generating all banks")
 
   /* View all bank items
@@ -416,6 +386,7 @@ async function generatePlaylist(values) {
     console.log("Core Item Three bank item " + i)
     console.log(coreItemThreeBank[i])
   }
+
   */
 
   //Final assembly
@@ -429,15 +400,15 @@ async function generatePlaylist(values) {
   console.log("Assembling final playlist")
   let minedBankIndex = 0
   if (numCoreItems == 1) {
-    coreItemOneSet = await generateMinimumCoreItemSet(values.accessToken, values.coreItemOne, coreItemOneBank)
+    coreItemOneSet = await generateMinimumCoreItemSet(req.query.accessToken, req.query.coreItemOne, coreItemOneBank)
     let coreItemOneMinSetLength = coreItemOneSet.length
     for (let i = 0; i < coreItemOneSet.length; i++) {
-      //console.log(coreItemOneSet[i])
+      console.log(coreItemOneSet[i])
       currLength += coreItemOneSet[i].duration
     }
     let count = 0
     let coreItemOneBankIndex = coreItemOneMinSetLength
-    while (currLength <= values.desiredLength) {
+    while (currLength <= req.query.desiredLength) {
       if (count == 0) {
         if (minedBankIndex < minedBank.length && minedBank[minedBankIndex] != undefined) {
           minedSetOne.push(minedBank[minedBankIndex])
@@ -459,9 +430,9 @@ async function generatePlaylist(values) {
     finalPlaylist = [...coreItemOneSet, ...minedSetOne]
   } else if (numCoreItems == 2) {
     let coreItemTwoSet = [];
-    coreItemOneSet = await generateMinimumCoreItemSet(values.accessToken, values.coreItemOne, coreItemOneBank)
+    coreItemOneSet = await generateMinimumCoreItemSet(req.query.accessToken, req.query.coreItemOne, coreItemOneBank)
     let coreItemOneMinSetLength = coreItemOneSet.length
-    coreItemTwoSet = await generateMinimumCoreItemSet(values.accessToken, values.coreItemTwo, coreItemTwoBank)
+    coreItemTwoSet = await generateMinimumCoreItemSet(req.query.accessToken, req.query.coreItemTwo, coreItemTwoBank)
     let coreItemTwoMinSetLength = coreItemOneSet.length
     for (let i = 0; i < coreItemOneSet.length; i++) {
       currLength += coreItemOneSet[i].duration
@@ -472,7 +443,7 @@ async function generatePlaylist(values) {
     let count = 0
     let coreItemOneBankIndex = coreItemOneMinSetLength
     let coreItemTwoBankIndex = coreItemTwoMinSetLength
-    while (currLength <= values.desiredLength) {
+    while (currLength <= req.query.desiredLength) {
       if (count == 0) {
         if (minedBankIndex < minedBank.length && minedBank[minedBankIndex] != undefined) {
           minedSetOne.push(minedBank[minedBankIndex])
@@ -503,11 +474,11 @@ async function generatePlaylist(values) {
     let coreItemTwoSet = [];
     let coreItemThreeSet = [];
     let minedSetTwo = [];
-    coreItemOneSet = await generateMinimumCoreItemSet(values.accessToken, values.coreItemOne, coreItemOneBank)
+    coreItemOneSet = await generateMinimumCoreItemSet(req.query.accessToken, req.query.coreItemOne, coreItemOneBank)
     let coreItemOneMinSetLength = coreItemOneSet.length
-    coreItemTwoSet = await generateMinimumCoreItemSet(values.accessToken, values.coreItemTwo, coreItemTwoBank)
+    coreItemTwoSet = await generateMinimumCoreItemSet(req.query.accessToken, req.query.coreItemTwo, coreItemTwoBank)
     let coreItemTwoMinSetLength = coreItemOneSet.length
-    coreItemThreeSet = await generateMinimumCoreItemSet(values.accessToken, values.coreItemThree, coreItemThreeBank)
+    coreItemThreeSet = await generateMinimumCoreItemSet(req.query.accessToken, req.query.coreItemThree, coreItemThreeBank)
     let coreItemThreeMinSetLength = coreItemOneSet.length
     for (let i = 0; i < coreItemOneSet.length; i++) {
       currLength += coreItemOneSet[i].duration
@@ -522,7 +493,7 @@ async function generatePlaylist(values) {
     let coreItemOneBankIndex = coreItemOneMinSetLength
     let coreItemTwoBankIndex = coreItemOneMinSetLength
     let coreItemThreeBankIndex = coreItemOneMinSetLength
-    while (currLength <= values.desiredLength) {
+    while (currLength <= req.query.desiredLength) {
       if (count == 0) {
         if (minedBankIndex < minedBank.length && minedBank[minedBankIndex] != undefined) {
           minedSetOne.push(minedBank[minedBankIndex])
@@ -570,13 +541,13 @@ async function generatePlaylist(values) {
     let playlistSet = new Set();
     for (let i = 0; i < finalPlaylist.length; i++) {
       if (playlistSet.has(finalPlaylist[i].id)) {
-        if (minedBankIndex < minedBank.length  && minedBank[minedBankIndex] != undefined && currLength <= values.desiredLength) {
+        if (minedBankIndex < minedBank.length  && minedBank[minedBankIndex] != undefined && currLength <= req.query.desiredLength) {
           finalPlaylist.splice(i, 1, minedBank[minedBankIndex])
           minedBankIndex++
         }
       //Null song check
-      } else if (await isSongTakenDown(values.accessToken, finalPlaylist[i].id) == true) {
-        if (minedBankIndex < minedBank.length  && minedBank[minedBankIndex] != undefined && currLength <= values.desiredLength) {
+      } else if (await isSongTakenDown(req.query.accessToken, finalPlaylist[i].id) == true) {
+        if (minedBankIndex < minedBank.length  && minedBank[minedBankIndex] != undefined && currLength <= req.query.desiredLength) {
           finalPlaylist.splice(i, 1, minedBank[minedBankIndex])
           minedBankIndex++
         }
@@ -595,7 +566,7 @@ async function generatePlaylist(values) {
   }
   */
   console.log("Final Playlist duration in seconds: " + currLength)
-  return {finalPlaylist : finalPlaylist}
+  console.log(req.query)
   res.status(200).send({finalPlaylist: finalPlaylist})
 }
 
@@ -619,7 +590,7 @@ app.post("/login", (req, res) => {
     console.log("Login Request received")
     const code = req.body.code
     const spotifyApi = new SpotifyWebApi({
-        redirectUri: LIVE_URL + '/',
+        redirectUri: LIVE_URL,
         clientId: '20f6d7c7a039406b855bb7337bb6dd25',
         clientSecret: '09f60c7d81d845cd993e51298d3fee71'
     })
@@ -641,7 +612,7 @@ app.post("/login", (req, res) => {
 app.post ('/refresh', (req, res) => {
   const refreshToken = req.body.refreshToken
   const spotifyApi = new SpotifyWebApi({
-    redirectUri: LIVE_URL + '/',
+    redirectUri: LIVE_URL,
     clientId: '20f6d7c7a039406b855bb7337bb6dd25',
     clientSecret: '09f60c7d81d845cd993e51298d3fee71',
     refreshToken,
@@ -657,5 +628,5 @@ app.post ('/refresh', (req, res) => {
     })
 })
 
-server.listen(port, () => {console.log("Server started on port 3001")})
+app.listen(port, () => {console.log("Server started on port 3001")})
 

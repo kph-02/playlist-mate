@@ -3,15 +3,12 @@ import { List, ListItem, ListItemAvatar, Avatar, ListItemText, Divider, Typograp
 import pmLogo from '../assets/Playlist-Mate-Logo.png';
 import axios from 'axios';
 import Login from "./Login";
-import io from 'socket.io-client';
 
 import { appTheme } from "../themes/themes";
 import SplashScreen from "./SplashScreen";
 
 const LIVE_URL = "https://www.playlistmate.app";
 //const LIVE_URL = "http://localhost:3001"
-
-const socket = io.connect(LIVE_URL + '/');
 
 function PlaylistDisplay(props) {
 
@@ -30,44 +27,6 @@ function PlaylistDisplay(props) {
             'Authorization': 'Bearer ' + accessToken
         }
     } 
-
-    const generatePlaylist = () => {
-        socket.emit("generate_playlist_request", {values});
-    };
-
-    useEffect(() => {
-        console.log(values);
-        generatePlaylist();
-    }, [])
-
-    useEffect(() => {
-        socket.on("generate_playlist_return", async (data) => {
-            console.log("Final Playlist Recieved")
-            console.log(data);
-            if (data.finalPlaylist.length != 0) {
-                setPlaylistGenerated(true)
-                setBackendData(data)
-                await generatePlaylistDescription()
-            }
-        })
-    }, [socket])
-
-    /* Using old API route for generating playlist
-    useEffect(() => {
-        console.log(values)
-        axios.get(LIVE_URL + '/generatePlaylist', {
-            params: values
-        }).then(async (res) => {
-            if (res.data.finalPlaylist.length != 0) {
-                setPlaylistGenerated(true)
-                setBackendData(res.data)
-                await generatePlaylistDescription()
-            }
-        }).catch(error => {
-            console.log(error);
-        });
-    }, [])
-    */
 
     async function getPlaylistItems() {
         let playlistLength = backendData.finalPlaylist.length
@@ -264,7 +223,20 @@ function PlaylistDisplay(props) {
         }
     }
 
-
+    useEffect(() => {
+        console.log(values)
+        axios.get(LIVE_URL + '/generatePlaylist', {
+            params: values
+        }).then(async (res) => {
+            if (res.data.finalPlaylist.length != 0) {
+                setPlaylistGenerated(true)
+                setBackendData(res.data)
+                await generatePlaylistDescription()
+            }
+        }).catch(error => {
+            console.log(error);
+        });
+    }, [])
 
     useEffect(() => {
         async function fetchData() {
