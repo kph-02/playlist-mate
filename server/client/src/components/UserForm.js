@@ -19,8 +19,10 @@ function UserForm(props) {
     const [coreItemThree, setCoreItemThree] = useState('');
     //desiredLength is in seconds.
     const [desiredLength, setDesiredLength] = useState(0);
+    const [spotUserID, setSpotUserID] = useState('');
     const {code} = props
     let accessToken = useAuth(code)
+
     
     
     const nextStep = () => {
@@ -36,6 +38,10 @@ function UserForm(props) {
 
     const previousStep = () => {
         setStep(step - 1);
+    }
+
+    const handleSetID = (userID) => {
+        setSpotUserID(userID);
     }
 
     const handleChange = (input) => e => {
@@ -74,7 +80,7 @@ function UserForm(props) {
         setCoreItemThree(itemThree);
     }
     
-    const values = {playlistTitle, isInstrumental, keywords, isPublic, coreItemOne, coreItemTwo, coreItemThree, desiredLength, accessToken}
+    const values = {playlistTitle, isInstrumental, keywords, isPublic, coreItemOne, coreItemTwo, coreItemThree, desiredLength, accessToken, spotUserID}
 
     switch(step) {
         case 1:
@@ -126,8 +132,8 @@ function UserForm(props) {
                 <>
                     <PlaylistDisplay
                         logout={logout}
-                        handleChange={handleChange}
                         values={values}
+                        handleSetID={handleSetID}
                     />            
                 </>
             )

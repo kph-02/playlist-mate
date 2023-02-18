@@ -13,12 +13,14 @@ const LIVE_URL = "https://www.playlistmate.app";
 function PlaylistDisplay(props) {
 
     const [playlistGenerated, setPlaylistGenerated] = useState(false);
-    const { values, handleChange, logout } = props;
+    const { values, logout, handleSetID } = props;
     const accessToken = values.accessToken;
     const [playlistDescription, setPlaylistDescription] = useState("");
     const[playlistItems, setPlaylistItems] = useState([]);
     const [backendData, setBackendData] = useState({});
+    const [count, setCount] = useState(0);
     const screen = "playlistDisplay"
+    
 
     var getQueryParameters = {
         method: 'GET',
@@ -135,17 +137,9 @@ function PlaylistDisplay(props) {
         
         //Create playlist description
 
-        let userID = "";
+        let userID = values.spotUserID;
         let playlistID = "";
-        //Get User ID
-        var returnedUser = await fetch('https://api.spotify.com/v1/me', getQueryParameters)
-            .then(response => response.json())
-            .then(data => {
-                userID = data.id
-            });
-        if (userID == "") {
-            console.log("API Error!")
-        }
+
         let isPlaylistPublic = false;
         if (values.isPublic == true || values.isPublic == 'true') {
             isPlaylistPublic = true;
@@ -223,20 +217,53 @@ function PlaylistDisplay(props) {
         }
     }
 
+
     useEffect(() => {
-        console.log(values)
-        axios.get(LIVE_URL + '/generatePlaylist', {
-            params: values
-        }).then(async (res) => {
-            if (res.data.finalPlaylist.length != 0) {
-                setPlaylistGenerated(true)
-                setBackendData(res.data)
-                await generatePlaylistDescription()
-            }
-        }).catch(error => {
-            console.log(error);
-        });
+        if (playlistGenerated == false && values.spotUserID != '') {
+            axios.get(LIVE_URL + '/generate_playlist', {
+                params: values
+            }).then(async (res) => {
+                //Replace with check to see if response is playlist
+                if (res.data.finalPlaylist.length != 0) {
+                    setPlaylistGenerated(true)
+                    setBackendData(res.data)
+                    await generatePlaylistDescription()
+                } else {
+                    setTimeout(function() {
+                        console.log(res.data)
+                        console.log('Generating playlist...');
+                      }, 5000);
+                }
+            }).catch(error => {
+                console.log(error);
+            });
+        }
+    });
+
+    useEffect(() => {
+        // declare the async data fetching function
+        const fetchUserID = async () => {
+            var returnedUser = await fetch('https://api.spotify.com/v1/me', getQueryParameters)
+                .then(response => response.json())
+                .then(data => {
+                    handleSetID(data.id)
+                });
+        }
+        // call the function
+        fetchUserID()
+          // make sure to catch any error
+          .catch(console.error);
+
+        const intervalId = setInterval(() => {
+        // Code to run every 5 seconds
+            setCount((prevCount) => prevCount + 1);
+                }, 5000);
+    
+        return () => {
+            clearInterval(intervalId);
+        };
     }, [])
+
 
     useEffect(() => {
         async function fetchData() {
